@@ -355,6 +355,7 @@
   <button id="menu-btn" onclick="toggleSidebar()" title="Toggle sidebar (S)">
     <span></span><span></span><span></span>
   </button>
+  <button class="nav-btn" id="btn-home" onclick="goHome()" title="Home (H)" style="flex-shrink:0">⌂</button>
   <div id="header-title">
     Tmail Flutter — Architecture Refactoring
     <small id="current-section"></small>
@@ -820,6 +821,21 @@ function startPresentation() {
   loadDoc(0);
 }
 
+// ── Go Home ───────────────────────────────────────────────────
+let welcomeHTML = '';
+
+function goHome() {
+  currentIndex = -1;
+  document.getElementById('content').innerHTML = welcomeHTML;
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('current-section').textContent = '';
+  document.getElementById('progress-text').textContent = '';
+  document.getElementById('btn-prev').disabled = true;
+  document.getElementById('btn-next').disabled = true;
+  document.getElementById('main').scrollTo({ top: 0, behavior: 'instant' });
+  history.replaceState(null, '', '#');
+}
+
 // ── Sidebar toggle ────────────────────────────────────────────
 let sidebarVisible = true;
 
@@ -842,12 +858,14 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); navigate(1); }
   if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); navigate(-1); }
   if (e.key === 's' || e.key === 'S') toggleSidebar();
+  if (e.key === 'h' || e.key === 'H') goHome();
   if (e.key === 'Home') { e.preventDefault(); loadDoc(0); }
   if (e.key === 'End') { e.preventDefault(); loadDoc(ALL_ITEMS.length - 1); }
 });
 
 // ── Init ──────────────────────────────────────────────────────
 buildSidebar();
+welcomeHTML = document.getElementById('content').innerHTML;
 
 // Load from hash if present
 const hash = parseInt(window.location.hash.slice(1));
