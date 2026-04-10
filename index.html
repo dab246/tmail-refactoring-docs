@@ -202,10 +202,13 @@
       font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
       border-radius: 10px;
     }
-    .markdown-body pre:not(:has(.hljs)) code {
-      display: block; padding: 20px 24px; color: #e2e8f0;
-      font-size: 13px; line-height: 1.6; white-space: pre;
+    /* Plain-text code blocks (no language tag) — ASCII diagrams */
+    .markdown-body pre code:not(.hljs) {
+      display: block; padding: 20px 24px;
+      color: #e2e8f0; background: #0f172a;
+      font-size: 13px; line-height: 1.75; white-space: pre;
       font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      border-radius: 10px;
     }
 
     .markdown-body table {
@@ -486,7 +489,9 @@ function loadDoc(index) {
   content.innerHTML = `${badge}<div class="markdown-body">${rendered}</div>${pageNav}`;
 
   // Syntax highlight
-  content.querySelectorAll('pre code').forEach(block => {
+  // Only highlight blocks with an explicit language tag (dart, yaml, etc.)
+  // Plain-text / ASCII diagram blocks are styled via CSS without hljs
+  content.querySelectorAll('pre code[class*="language-"]').forEach(block => {
     hljs.highlightElement(block);
   });
 
