@@ -136,26 +136,102 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Welcome screen ──────────────────────────────────────── */
-    #welcome {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; min-height: 70vh; text-align: center; gap: 24px;
-    }
-    #welcome h1 { font-size: 28px; font-weight: 700; color: #1e293b; }
-    #welcome p { color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 480px; }
-    #welcome .stats {
-      display: flex; gap: 32px; margin-top: 8px;
-    }
-    #welcome .stat { text-align: center; }
-    #welcome .stat .num { font-size: 28px; font-weight: 700; }
-    #welcome .stat .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    #welcome .start-btn {
-      margin-top: 8px; padding: 12px 28px; background: var(--accent);
-      color: white; border: none; border-radius: 8px; font-size: 15px;
-      font-weight: 600; cursor: pointer; transition: background .15s;
-    }
-    #welcome .start-btn:hover { background: #2563eb; }
-    #welcome .hint { font-size: 12px; color: #94a3b8; }
+    /* ── Welcome / Overview screen ──────────────────────────── */
+    #welcome { width: 100%; }
+    .ov-hero { text-align:center; padding:28px 0 22px; border-bottom:1px solid var(--border); margin-bottom:28px; }
+    .ov-hero h1 { font-size:26px; font-weight:800; color:#0f172a; margin-bottom:5px; }
+    .ov-hero h1 span { color:var(--accent); }
+    .ov-hero .ov-adr { font-size:12px; color:var(--muted); }
+    .ov-stats-row { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:16px; }
+    .ov-stat { display:flex; flex-direction:column; align-items:center; background:#f8fafc;
+      border-radius:10px; padding:11px 18px; min-width:86px; border:1px solid var(--border); }
+    .ov-stat b { font-size:24px; font-weight:700; line-height:1.2; }
+    .ov-stat span { font-size:11px; color:var(--muted); margin-top:3px; }
+    .ov-stat.red b{color:#f87171;} .ov-stat.yellow b{color:#fbbf24;} .ov-stat.green b{color:#34d399;} .ov-stat.blue b{color:#60a5fa;}
+    .ov-journey { display:flex; align-items:stretch; gap:10px; margin-bottom:32px; }
+    .ov-j-step { flex:1; background:white; border:2px solid var(--border); border-radius:12px;
+      padding:16px 12px; text-align:center; cursor:pointer; transition:all .15s;
+      display:flex; flex-direction:column; align-items:center; gap:5px; }
+    .ov-j-step:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.1); }
+    .ov-j-step.red:hover{border-color:#f87171;} .ov-j-step.yellow:hover{border-color:#fbbf24;} .ov-j-step.green:hover{border-color:#34d399;}
+    .ov-j-icon { font-size:24px; } .ov-j-step b { font-size:14px; color:#1e293b; }
+    .ov-j-step span { font-size:11px; color:var(--muted); line-height:1.5; }
+    .ov-j-arrow { font-size:20px; color:#cbd5e1; align-self:center; flex-shrink:0; }
+    .ov-section { margin-bottom:32px; }
+    .ov-section-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2px solid; }
+    .ov-section-header.red{border-color:#fecaca;} .ov-section-header.yellow{border-color:#fde68a;}
+    .ov-section-header.green{border-color:#a7f3d0;} .ov-section-header.blue{border-color:#bfdbfe;}
+    .ov-section-num { font-size:10px; font-weight:700; letter-spacing:.08em; background:#f1f5f9;
+      color:var(--muted); padding:2px 7px; border-radius:20px; text-transform:uppercase; }
+    .ov-section-header h2 { font-size:16px; font-weight:700; color:#1e293b; margin:0; border:none; padding:0; }
+    .ov-loc-chart { background:#f8fafc; border-radius:12px; padding:16px; margin-bottom:14px; border:1px solid var(--border); }
+    .ov-loc-title { font-size:10px; font-weight:600; color:var(--muted); margin-bottom:11px; text-transform:uppercase; letter-spacing:.06em; }
+    .ov-bar { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+    .ov-bar-label { width:86px; font-size:11px; color:#475569; text-align:right; flex-shrink:0; }
+    .ov-bar-fill { height:21px; border-radius:4px; display:flex; align-items:center; padding:0 9px;
+      font-size:10px; font-weight:600; color:white; min-width:34px; cursor:pointer; transition:opacity .15s; white-space:nowrap; }
+    .ov-bar-fill:hover{opacity:.85;} .ov-bar-fill.c-red{background:#ef4444;} .ov-bar-fill.c-red2{background:#f87171;}
+    .ov-bar-fill.c-orange{background:#f97316;} .ov-bar-fill.c-yellow{background:#ca8a04;} .ov-bar-fill.c-green{background:#16a34a;}
+    .ov-bar-target { margin-top:8px; font-size:10px; color:var(--muted); padding-left:96px; font-style:italic; }
+    .ov-issues-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; }
+    .ov-issue-group { background:#f8fafc; border-radius:10px; padding:12px; border:1px solid var(--border); }
+    .ov-issue-group-label { font-size:10px; font-weight:700; letter-spacing:.06em; margin-bottom:8px; text-transform:uppercase; }
+    .ov-issue-group-label.red{color:#ef4444;} .ov-issue-group-label.orange{color:#f97316;} .ov-issue-group-label.yellow{color:#ca8a04;}
+    .ov-issue-tag { font-size:11px; color:#475569; padding:4px 8px; background:white; border-radius:5px;
+      margin-bottom:5px; cursor:pointer; border:1px solid var(--border); transition:all .1s; display:block; }
+    .ov-issue-tag:hover { border-color:#94a3b8; color:#1e293b; background:#f1f5f9; }
+    .ov-tech-flow { display:grid; grid-template-columns:1fr 34px 1fr; align-items:center; gap:4px; margin-bottom:14px; }
+    .ov-tech-problem,.ov-tech-solution { background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:13px; cursor:pointer; transition:all .15s; }
+    .ov-tech-problem:hover{border-color:#f97316;background:#fff7ed;} .ov-tech-solution:hover{border-color:#34d399;background:#f0fdf4;}
+    .ov-tech-arrow { text-align:center; font-size:18px; color:#94a3b8; font-weight:700; }
+    .ov-tech-label { font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+      margin-bottom:5px; display:inline-block; padding:2px 7px; border-radius:20px; }
+    .ov-tech-label.problem{background:#fee2e2;color:#dc2626;} .ov-tech-label.solution{background:#d1fae5;color:#059669;}
+    .ov-tech-problem b,.ov-tech-solution b { display:block; font-size:13px; color:#1e293b; margin-bottom:3px; }
+    .ov-tech-problem p,.ov-tech-solution p { font-size:11px; color:var(--muted); margin:0; line-height:1.5; }
+    .ov-tech-evidence { margin-top:6px; padding:5px 9px; background:white; border-radius:5px; font-size:10px; color:#ef4444; font-family:monospace; border:1px solid #fecaca; }
+    .ov-tech-score { margin-top:6px; padding:3px 8px; background:#ecfdf5; border-radius:5px; font-size:11px; color:#059669; font-weight:600; }
+    .ov-tech-spacer { grid-column:1/-1; height:8px; }
+    .ov-arch { display:flex; align-items:flex-start; gap:10px; margin-bottom:18px; }
+    .ov-arch-col { flex:1; border-radius:10px; padding:13px; border:1px solid; }
+    .ov-arch-col.before{background:#fff5f5;border-color:#fecaca;} .ov-arch-col.after{background:#f0fdf4;border-color:#a7f3d0;}
+    .ov-arch-title { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
+    .ov-arch-col.before .ov-arch-title{color:#dc2626;} .ov-arch-col.after .ov-arch-title{color:#059669;}
+    .ov-arch-god { background:#fee2e2; border-radius:6px; padding:7px 9px; font-size:11px; font-weight:600; color:#991b1b; margin-bottom:6px; }
+    .ov-arch-god small { display:block; font-weight:400; color:#b91c1c; font-size:10px; margin-top:2px; }
+    .ov-arch-deps { font-size:10px; color:#dc2626; margin-bottom:6px; line-height:1.8; text-align:center; }
+    .ov-arch-subs { background:white; border-radius:5px; padding:6px 8px; font-size:10px; color:#64748b; }
+    .ov-arch-bus { background:#d1fae5; border-radius:6px; padding:7px 9px; font-size:11px; font-weight:600; color:#065f46; margin-bottom:6px; }
+    .ov-arch-bus small { display:block; font-weight:400; color:#047857; font-size:10px; margin-top:2px; }
+    .ov-arch-services { display:flex; flex-direction:column; gap:4px; margin-bottom:6px; }
+    .ov-arch-services div { background:#ecfdf5; border-radius:5px; padding:4px 8px; font-size:10px; color:#059669; font-weight:500; }
+    .ov-arch-controllers { background:white; border-radius:5px; padding:6px 8px; font-size:10px; color:#64748b; }
+    .ov-arch-controllers small { display:block; color:#94a3b8; margin-top:3px; }
+    .ov-arch-mid { font-size:20px; color:#94a3b8; flex-shrink:0; align-self:center; }
+    .ov-sol-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:9px; }
+    .ov-sol-card { background:white; border:1px solid var(--border); border-radius:10px; padding:11px 13px; cursor:pointer; transition:all .15s; border-left:3px solid transparent; }
+    .ov-sol-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    .ov-sol-phase { font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; margin-bottom:5px; display:inline-block; padding:2px 6px; border-radius:20px; }
+    .ov-sol-phase.p0{background:#ede9fe;color:#7c3aed;} .ov-sol-phase.p1{background:#dbeafe;color:#1d4ed8;}
+    .ov-sol-phase.p2{background:#dcfce7;color:#15803d;} .ov-sol-phase.p3{background:#fee2e2;color:#b91c1c;}
+    .ov-sol-card b { display:block; font-size:12px; color:#1e293b; margin-bottom:3px; }
+    .ov-sol-card p { font-size:10px; color:var(--muted); margin:0; line-height:1.5; }
+    .ov-roadmap { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; }
+    .ov-phase { border-radius:9px; padding:11px 9px; border:1px solid; }
+    .ov-phase.p0{background:#f5f3ff;border-color:#ddd6fe;} .ov-phase.p1{background:#eff6ff;border-color:#bfdbfe;}
+    .ov-phase.p2{background:#f0fdf4;border-color:#bbf7d0;} .ov-phase.p3{background:#fff1f2;border-color:#fecdd3;}
+    .ov-phase.p4{background:#f8fafc;border-color:#e2e8f0;}
+    .ov-phase-date { font-size:9px; color:var(--muted); margin-bottom:3px; }
+    .ov-phase-name { font-size:12px; font-weight:700; margin-bottom:5px; }
+    .ov-phase.p0 .ov-phase-name{color:#7c3aed;} .ov-phase.p1 .ov-phase-name{color:#1d4ed8;}
+    .ov-phase.p2 .ov-phase-name{color:#15803d;} .ov-phase.p3 .ov-phase-name{color:#b91c1c;} .ov-phase.p4 .ov-phase-name{color:#475569;}
+    .ov-phase-desc { font-size:10px; color:#64748b; line-height:1.6; }
+    .ov-cta { text-align:center; padding:26px 0 10px; border-top:1px solid var(--border); margin-top:26px; }
+    .start-btn { padding:11px 26px; background:var(--accent); color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:background .15s; }
+    .start-btn:hover{background:#2563eb;}
+    .ov-hint { font-size:11px; color:#94a3b8; margin-top:9px; }
+    @media(max-width:700px){.ov-roadmap{grid-template-columns:1fr 1fr;} .ov-tech-flow{grid-template-columns:1fr;}
+      .ov-arch{flex-direction:column;} .ov-journey{flex-direction:column;} .ov-j-arrow{transform:rotate(90deg);}}
 
     /* ── Markdown styles ─────────────────────────────────────── */
     .markdown-body { line-height: 1.75; }
@@ -268,7 +344,7 @@
       #sidebar.visible { transform: translateX(0); }
       #main { margin-left: 0 !important; }
       #content { padding: 28px 20px 60px; }
-      #welcome .stats { gap: 20px; }
+      .ov-roadmap { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -295,18 +371,253 @@
 <main id="main">
   <div id="content">
     <div id="welcome">
-      <div>
-        <div style="font-size:48px;margin-bottom:16px">📐</div>
-        <h1>Architecture Refactoring</h1>
-        <p>Phân tích code health, quyết định kỹ thuật và giải pháp tái cấu trúc kiến trúc cho <strong>Tmail Flutter</strong>.</p>
+
+      <!-- ── HERO ──────────────────────────────────────────────── -->
+      <div class="ov-hero">
+        <h1>Architecture Refactoring — <span>Tmail Flutter</span></h1>
+        <div class="ov-adr">ADR-0076 · 2026-04-10 · Scope: 7 controllers · ~10,522 lines · Constraint: Giữ GetX</div>
+        <div class="ov-stats-row">
+          <div class="ov-stat red"><b>14</b><span>Code Issues</span></div>
+          <div class="ov-stat yellow"><b>6</b><span>Decisions</span></div>
+          <div class="ov-stat green"><b>8</b><span>Blueprints</span></div>
+          <div class="ov-stat blue"><b>5</b><span>Phases</span></div>
+        </div>
       </div>
-      <div class="stats">
-        <div class="stat"><div class="num" style="color:#f87171">14</div><div class="label">Code Issues</div></div>
-        <div class="stat"><div class="num" style="color:#fbbf24">6</div><div class="label">Technical Decisions</div></div>
-        <div class="stat"><div class="num" style="color:#34d399">8</div><div class="label">Solutions</div></div>
+
+      <!-- ── JOURNEY MAP ────────────────────────────────────────── -->
+      <div class="ov-journey">
+        <div class="ov-j-step red" onclick="loadDoc(0)">
+          <div class="ov-j-icon">🔍</div>
+          <b>1 · Problems</b>
+          <span>14 code health issues<br>God Object · Feature Envy<br>Bumpy Road · Deep Nesting</span>
+        </div>
+        <div class="ov-j-arrow">→</div>
+        <div class="ov-j-step yellow" onclick="loadDoc(4)">
+          <div class="ov-j-icon">⚙️</div>
+          <b>2 · Technical</b>
+          <span>Tại sao GetxService?<br>Tại sao AppEventBus?<br>So sánh 5 + 6 phương án</span>
+        </div>
+        <div class="ov-j-arrow">→</div>
+        <div class="ov-j-step green" onclick="loadDoc(10)">
+          <div class="ov-j-icon">✅</div>
+          <b>3 · Solutions</b>
+          <span>8 blueprints<br>Before/After · Metrics<br>Phase 0 → Phase 4</span>
+        </div>
       </div>
-      <button class="start-btn" onclick="startPresentation()">Bắt đầu →</button>
-      <div class="hint">hoặc chọn tài liệu từ sidebar · <kbd>←</kbd> <kbd>→</kbd> điều hướng · <kbd>S</kbd> ẩn/hiện sidebar</div>
+
+      <!-- ── SECTION 1: PROBLEMS ────────────────────────────────── -->
+      <section class="ov-section">
+        <div class="ov-section-header red">
+          <span class="ov-section-num">Problems</span>
+          <h2>14 Code Health Issues — 7 Controllers</h2>
+        </div>
+
+        <div class="ov-loc-chart">
+          <div class="ov-loc-title">Lines of Code hiện tại → Mục tiêu ≤ 300 lines / controller</div>
+          <div class="ov-bar">
+            <span class="ov-bar-label">Dashboard</span>
+            <div class="ov-bar-fill c-red" style="width:88%" onclick="loadDoc(1)">3,508 ← God Object ⚠</div>
+          </div>
+          <div class="ov-bar">
+            <span class="ov-bar-label">SingleEmail</span>
+            <div class="ov-bar-fill c-red2" style="width:41%" onclick="loadDoc(15)">1,630</div>
+          </div>
+          <div class="ov-bar">
+            <span class="ov-bar-label">Thread</span>
+            <div class="ov-bar-fill c-red2" style="width:41%" onclick="loadDoc(14)">1,625</div>
+          </div>
+          <div class="ov-bar">
+            <span class="ov-bar-label">Mailbox</span>
+            <div class="ov-bar-fill c-red2" style="width:40%" onclick="loadDoc(13)">1,602</div>
+          </div>
+          <div class="ov-bar">
+            <span class="ov-bar-label">Search</span>
+            <div class="ov-bar-fill c-orange" style="width:30%" onclick="loadDoc(16)">1,198</div>
+          </div>
+          <div class="ov-bar">
+            <span class="ov-bar-label">Base</span>
+            <div class="ov-bar-fill c-yellow" style="width:16%" onclick="loadDoc(11)">647</div>
+          </div>
+          <div class="ov-bar">
+            <span class="ov-bar-label">ThreadDetail</span>
+            <div class="ov-bar-fill c-green" style="width:8%">312</div>
+          </div>
+          <div class="ov-bar-target">▲ Mục tiêu sau refactor: ≤ 300 lines / controller</div>
+        </div>
+
+        <div class="ov-issues-grid">
+          <div class="ov-issue-group">
+            <div class="ov-issue-group-label red">🔴 Critical (4)</div>
+            <div class="ov-issue-tag" onclick="loadDoc(1)">#1 Constructor Over-Injection — 43 deps</div>
+            <div class="ov-issue-tag" onclick="loadDoc(1)">#2 Large Method — 113-line dispatcher</div>
+            <div class="ov-issue-tag" onclick="loadDoc(1)">#3 Complex Method — CC &gt; 15</div>
+            <div class="ov-issue-tag" onclick="loadDoc(1)">#14 BaseController God Class — 7 domains</div>
+          </div>
+          <div class="ov-issue-group">
+            <div class="ov-issue-group-label orange">🟠 High (5)</div>
+            <div class="ov-issue-tag" onclick="loadDoc(2)">#4 Bumpy Road — 31 branches</div>
+            <div class="ov-issue-tag" onclick="loadDoc(2)">#5 Deep Nested Complexity — 4+ levels</div>
+            <div class="ov-issue-tag" onclick="loadDoc(2)">#6 Low Cohesion — unrelated methods</div>
+            <div class="ov-issue-tag" onclick="loadDoc(3)">#7 Excess Data Declarations — 42+ Rx fields</div>
+            <div class="ov-issue-tag" onclick="loadDoc(2)">#8 Feature Envy — 75+ Get.find refs</div>
+          </div>
+          <div class="ov-issue-group">
+            <div class="ov-issue-group-label yellow">🟡 Medium (5)</div>
+            <div class="ov-issue-tag" onclick="loadDoc(3)">#9 Code Health Degradations</div>
+            <div class="ov-issue-tag" onclick="loadDoc(3)">#10 Excess Function Arguments</div>
+            <div class="ov-issue-tag" onclick="loadDoc(3)">#11 Primitive Obsession</div>
+            <div class="ov-issue-tag" onclick="loadDoc(3)">#12 Temporal Coupling</div>
+            <div class="ov-issue-tag" onclick="loadDoc(3)">#13 Mixed Abstraction Levels</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION 2: TECHNICAL ───────────────────────────────── -->
+      <section class="ov-section">
+        <div class="ov-section-header yellow">
+          <span class="ov-section-num">Technical</span>
+          <h2>2 Vấn đề Cốt lõi → 2 Giải pháp Kỹ thuật</h2>
+        </div>
+
+        <div class="ov-tech-flow">
+          <div class="ov-tech-problem" onclick="loadDoc(4)">
+            <div class="ov-tech-label problem">Vấn đề A · Shared State</div>
+            <b>State của app nằm ở đâu?</b>
+            <p>5 controllers phụ thuộc vào 1 God Object để đọc state — không thể tách</p>
+            <div class="ov-tech-evidence">Dashboard: 42 Rx fields · 43 deps<br>Get.find() 75+ times</div>
+          </div>
+          <div class="ov-tech-arrow">→</div>
+          <div class="ov-tech-solution" onclick="loadDoc(5)">
+            <div class="ov-tech-label solution">Giải pháp ✅ GetxService</div>
+            <b>EmailListStateService<br>ComposerStateService<br>DragDropStateService</b>
+            <p>Permanent singleton · injectable · reactive .obs · 1 domain/service</p>
+            <div class="ov-tech-score">Decision score: 3.00 / 3.00 — Winner</div>
+          </div>
+
+          <div class="ov-tech-spacer"></div>
+
+          <div class="ov-tech-problem" onclick="loadDoc(4)">
+            <div class="ov-tech-label problem">Vấn đề B · Inter-Controller Comm</div>
+            <b>Controller A thông báo B thế nào?</b>
+            <p>Rxn&lt;UIAction&gt; + ever() callback — 85–159 line closures, tight coupling</p>
+            <div class="ov-tech-evidence">ever(dashboard.dashBoardAction, ...)<br>13 action types · noise mọi subscriber</div>
+          </div>
+          <div class="ov-tech-arrow">→</div>
+          <div class="ov-tech-solution" onclick="loadDoc(6)">
+            <div class="ov-tech-label solution">Giải pháp ✅ AppEventBus</div>
+            <b>sealed class AppEvent<br>dispatch() / whereType&lt;T&gt;()</b>
+            <p>Zero coupling · type-safe · compositeSubscription auto-cleanup · no extra package</p>
+            <div class="ov-tech-score">Decision score: 3.00 / 3.00 — Winner</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION 3: SOLUTIONS ───────────────────────────────── -->
+      <section class="ov-section">
+        <div class="ov-section-header green">
+          <span class="ov-section-num">Solutions</span>
+          <h2>Kiến trúc Trước / Sau + 8 Blueprints</h2>
+        </div>
+
+        <div class="ov-arch">
+          <div class="ov-arch-col before">
+            <div class="ov-arch-title">⚠ Trước — God Object</div>
+            <div class="ov-arch-god">MailboxDashBoardController<small>3,508 lines · 43 deps · 42 Rx fields · 15 bounded contexts</small></div>
+            <div class="ov-arch-deps">↓ Get.find() 75+ · ever() 159 lines<br>↓ Rxn&lt;UIAction&gt; · tight coupling</div>
+            <div class="ov-arch-subs">MailboxController · ThreadController<br>SingleEmailController · SearchController</div>
+          </div>
+          <div class="ov-arch-mid">→</div>
+          <div class="ov-arch-col after">
+            <div class="ov-arch-title">✅ Sau — Decoupled</div>
+            <div class="ov-arch-bus">AppEventBus (GetxService)<small>dispatch() · whereType&lt;T&gt;() · zero coupling</small></div>
+            <div class="ov-arch-services">
+              <div>EmailListStateService · ComposerStateService</div>
+              <div>DragDropStateService (GetxService permanent)</div>
+            </div>
+            <div class="ov-arch-controllers">EmailActionCtrl · MailboxNavCtrl · SendingQueueCtrl · SessionCtrl<small>each ~200–300 lines · ≤7 deps · constructor injection only</small></div>
+          </div>
+        </div>
+
+        <div class="ov-sol-grid">
+          <div class="ov-sol-card" onclick="loadDoc(17)" style="border-left-color:#7c3aed">
+            <div class="ov-sol-phase p0">Phase 0</div>
+            <b>Shared Infrastructure</b>
+            <p>AppEventBus · GetxService shells · Domain Contracts · CoreBindings</p>
+          </div>
+          <div class="ov-sol-card" onclick="loadDoc(11)" style="border-left-color:#7c3aed">
+            <div class="ov-sol-phase p0">Phase 0</div>
+            <b>BaseController</b>
+            <p>14 → 6 deps · IAuthService · ISessionTokenRefresher · domain abstractions</p>
+          </div>
+          <div class="ov-sol-card" onclick="loadDoc(13)" style="border-left-color:#3b82f6">
+            <div class="ov-sol-phase p1">Phase 1</div>
+            <b>MailboxController</b>
+            <p>1,602 → ~600 lines · Feature Envy fix · IMailboxNavigationContract</p>
+          </div>
+          <div class="ov-sol-card" onclick="loadDoc(14)" style="border-left-color:#3b82f6">
+            <div class="ov-sol-phase p1">Phase 1</div>
+            <b>ThreadController</b>
+            <p>1,625 → ~500 lines · Deep nesting fix · loadState enum</p>
+          </div>
+          <div class="ov-sol-card" onclick="loadDoc(15)" style="border-left-color:#3b82f6">
+            <div class="ov-sol-phase p1">Phase 1</div>
+            <b>SingleEmailController</b>
+            <p>1,630 → ~400 lines · CalendarEmailController tách riêng</p>
+          </div>
+          <div class="ov-sol-card" onclick="loadDoc(16)" style="border-left-color:#3b82f6">
+            <div class="ov-sol-phase p1">Phase 1</div>
+            <b>SearchEmailController</b>
+            <p>1,198 → ~400 lines · 5 mixins xóa · SearchFilterController</p>
+          </div>
+          <div class="ov-sol-card" onclick="loadDoc(12)" style="border-left-color:#ef4444">
+            <div class="ov-sol-phase p3">Phase 3 ⚠</div>
+            <b>Dashboard Controller</b>
+            <p>3,508 → ~200 lines · God Object split · 4 sub-controllers + 3 services</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION 4: ROADMAP ─────────────────────────────────── -->
+      <section class="ov-section">
+        <div class="ov-section-header blue">
+          <span class="ov-section-num">Roadmap</span>
+          <h2>5 Phases — ~5–8 tháng · Song song với roadmap sản phẩm</h2>
+        </div>
+        <div class="ov-roadmap">
+          <div class="ov-phase p0">
+            <div class="ov-phase-date">Apr · W15–W18</div>
+            <div class="ov-phase-name">Phase 0</div>
+            <div class="ov-phase-desc">Foundation<br>AppEventBus · GetxService shells · Domain contracts · BaseCtrl cleanup</div>
+          </div>
+          <div class="ov-phase p1">
+            <div class="ov-phase-date">May · W19–W24</div>
+            <div class="ov-phase-name">Phase 1</div>
+            <div class="ov-phase-desc">Constructor Injection<br>Leaf: ThreadDetail, Search<br>Mid: Thread, Single, Mailbox</div>
+          </div>
+          <div class="ov-phase p2">
+            <div class="ov-phase-date">Jun · W25–W28</div>
+            <div class="ov-phase-name">Phase 2</div>
+            <div class="ov-phase-desc">State Decomposition<br>.obs → GetxService<br>ever() → EventBus</div>
+          </div>
+          <div class="ov-phase p3">
+            <div class="ov-phase-date">Jul–Aug · W29–W36</div>
+            <div class="ov-phase-name">Phase 3 ⚠</div>
+            <div class="ov-phase-desc">God Object Split<br>HIGH RISK<br>Tránh release window</div>
+          </div>
+          <div class="ov-phase p4">
+            <div class="ov-phase-date">Sep–Oct · W37–W44</div>
+            <div class="ov-phase-name">Phase 4</div>
+            <div class="ov-phase-desc">Cleanup & Regression<br>Android · iOS · Web<br>Full test pass</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── CTA ────────────────────────────────────────────────── -->
+      <div class="ov-cta">
+        <button class="start-btn" onclick="loadDoc(0)">Bắt đầu đọc →</button>
+        <div class="ov-hint">← → điều hướng · S ẩn/hiện sidebar · Home/End nhảy đầu/cuối</div>
+      </div>
+
     </div>
   </div>
 </main>
