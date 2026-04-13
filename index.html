@@ -381,7 +381,7 @@
     <span></span><span></span><span></span>
   </button>
   <button class="nav-btn" id="btn-home" onclick="goHome()" title="Home (H)" style="flex-shrink:0">⌂</button>
-  <a href="slides.html" target="_blank" id="btn-slides" title="Open presentation slides">🎯 Slides</a>
+  <a href="slides.html" target="_blank" id="btn-slides" title="Open presentation slides" onclick="event.preventDefault(); window.open(currentLang === 'en' ? 'slides-en.html' : 'slides.html', '_blank')">🎯 Slides</a>
   <button id="btn-lang" onclick="switchLanguage()" title="Switch language (L)">EN</button>
   <div id="header-title">
     Tmail Flutter — Architecture Refactoring
