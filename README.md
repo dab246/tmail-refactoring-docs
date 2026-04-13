@@ -1,40 +1,40 @@
 # Tmail Flutter — Architecture Refactoring
 
-> **ADR-0076** · Tái cấu trúc kiến trúc presentation layer, giữ nguyên GetX framework.
-> **Ngày:** 2026-04-10 · **Scope:** 7 controllers (~10,522 lines tổng)
+> **ADR-0076** · Refactoring the presentation layer architecture while keeping the GetX framework.
+> **Date:** 2026-04-10 · **Scope:** 7 controllers (~10,522 lines total)
 
 ---
 
-## Xem tài liệu
+## Viewing the Documentation
 
 ```bash
 # Clone repo
 git clone https://github.com/<username>/tmail-refactoring-docs.git
 cd tmail-refactoring-docs
 
-# Chạy local server
+# Run local server
 npx serve .
-# hoặc
+# or
 python -m http.server 8000
 ```
 
-Mở `http://localhost:3000` (hoặc port tương ứng) trên browser.
+Open `http://localhost:3000` (or the corresponding port) in your browser.
 
 **GitHub Pages:** `https://<username>.github.io/tmail-refactoring-docs/`
 
 **Keyboard shortcuts:**
-- `←` `→` — điều hướng prev/next
-- `S` — ẩn/hiện sidebar
-- `Home` / `End` — nhảy đầu/cuối
+- `←` `→` — navigate prev/next
+- `S` — toggle sidebar
+- `Home` / `End` — jump to first/last doc
 
 ---
 
-## Bối cảnh
+## Background
 
-Twake Mail (tmail-flutter) là email client đa nền tảng (Android/iOS/Web) xây dựng bằng Flutter + JMAP. Sau nhiều vòng phát triển, presentation layer tích lũy nhiều vấn đề code health nghiêm trọng:
+Twake Mail (tmail-flutter) is a cross-platform email client (Android/iOS/Web) built with Flutter + JMAP. After multiple development cycles, the presentation layer has accumulated serious code health issues:
 
 ```
- Tổng Lines of Code — 7 controllers
+ Total Lines of Code — 7 controllers
  ─────────────────────────────────────────────────────────────────────
  MailboxDashboard ████████████████████████████████████  3,508  ← God Object
  SingleEmail      ████████████████                      1,630
@@ -44,38 +44,38 @@ Twake Mail (tmail-flutter) là email client đa nền tảng (Android/iOS/Web) x
  BaseController   ██████                                  647
  ThreadDetail     ███                                     312
  ─────────────────────────────────────────────────────────────────────
- Tổng             ~10,522 lines  |  Mục tiêu: ≤ 300 lines / controller
+ Total            ~10,522 lines  |  Target: ≤ 300 lines / controller
 ```
 
 ---
 
-## Cấu trúc tài liệu
+## Documentation Structure
 
-Tài liệu chia làm 3 phần, đọc theo thứ tự:
+The documentation is divided into 3 sections, intended to be read in order:
 
 ```
  docs/
- ├── problems/      ← 1. Vấn đề hiện tại là gì?
- ├── technical/     ← 2. Tại sao chọn giải pháp này?
- └── solutions/     ← 3. Giải pháp cụ thể như thế nào?
+ ├── problems/      ← 1. What are the current problems?
+ ├── technical/     ← 2. Why was this solution chosen?
+ └── solutions/     ← 3. What does the concrete solution look like?
 ```
 
 ---
 
-## 1. Problems — 14 vấn đề code health
+## 1. Problems — 14 Code Health Issues
 
-> **Đọc trước để hiểu ngữ cảnh.** Mỗi vấn đề có code evidence cụ thể với line numbers.
+> **Read first for context.** Each issue includes concrete code evidence with line numbers.
 
 ```
  docs/problems/
- ├── 01-overview.md            ← Index: heatmap severity, LoC chart, bảng tổng hợp
+ ├── 01-overview.md            ← Index: severity heatmap, LoC chart, summary table
  ├── 02-size-and-complexity.md ← #1 Constructor Over-Injection (43 deps)
  │                                #2 Large Method (113-line dispatcher)
  │                                #3 Complex Method (CC > 15)
  │                                #14 BaseController God Class (7 domains)
  ├── 03-coupling-and-cohesion.md ← #4 Bumpy Road (31 branches)
  │                                  #5 Deep Nested Complexity (4+ levels)
- │                                  #6 Low Cohesion (methods không dùng class fields)
+ │                                  #6 Low Cohesion (methods not using class fields)
  │                                  #8 Feature Envy (75+ Get.find refs)
  └── 04-design-smells.md       ← #7 Excess Data Declarations (42+ Rx fields)
                                   #9 Code Health Degradations (late?, dynamic inject)
@@ -98,27 +98,27 @@ Tài liệu chia làm 3 phần, đọc theo thứ tự:
 
 ---
 
-## 2. Technical — Tại sao chọn GetxService + AppEventBus?
+## 2. Technical — Why GetxService + AppEventBus?
 
-> **Quyết định kỹ thuật có căn cứ.** So sánh đầy đủ các phương án trước khi chọn.
+> **Evidence-based technical decisions.** Full comparison of alternatives before selection.
 
 ```
  docs/technical/
- ├── 01-problem-statement.md    ← 2 bài toán cốt lõi cần giải đồng thời
- │                                 A: Shared State nằm ở đâu?
- │                                 B: Controller giao tiếp thế nào?
- ├── 02-getx-service.md         ← GetxService là gì, lifecycle vs GetxController
- ├── 03-event-bus.md            ← AppEventBus là gì, cơ chế pub/sub
- ├── 04-shared-state-options.md ← So sánh 5 phương án Shared State
+ ├── 01-problem-statement.md    ← 2 core problems that must be solved simultaneously
+ │                                 A: Where does Shared State live?
+ │                                 B: How do controllers communicate?
+ ├── 02-getx-service.md         ← What is GetxService, lifecycle vs GetxController
+ ├── 03-event-bus.md            ← What is AppEventBus, pub/sub mechanism
+ ├── 04-shared-state-options.md ← Comparison of 5 Shared State options
  │                                 → God Object / GetxService / GetxCtrl permanent
  │                                 → Static Singleton / InheritedWidget
- ├── 05-communication-options.md ← So sánh 6 phương án Inter-Controller Comm
+ ├── 05-communication-options.md ← Comparison of 6 Inter-Controller Communication options
  │                                  → Rxn<UIAction> / Get.find() / AppEventBus
  │                                  → GetX Workers / RxDart / Callback injection
- └── 06-decisions-and-risks.md  ← Quyết định cuối + rủi ro + DOs/DON'Ts rules
+ └── 06-decisions-and-risks.md  ← Final decisions + risks + DOs/DON'Ts rules
 ```
 
-**Decision matrices (tóm tắt):**
+**Decision matrices (summary):**
 
 ```
  Shared State                    Inter-Controller Communication
@@ -132,14 +132,14 @@ Tài liệu chia làm 3 phần, đọc theo thứ tự:
 
 ---
 
-## 3. Solutions — Giải pháp cụ thể cho từng controller
+## 3. Solutions — Concrete Plan per Controller
 
-> **Kế hoạch thực thi.** Mỗi file là blueprint cho 1 controller/component.
+> **Implementation blueprints.** Each file is a blueprint for one controller/component.
 
 ```
  docs/solutions/
- ├── 01-overview.md                    ← Kiến trúc tổng quan trước/sau + roadmap
- ├── 02-base-controller.md             ← Tách domain contracts, clean arch fix
+ ├── 01-overview.md                    ← Overall before/after architecture + roadmap
+ ├── 02-base-controller.md             ← Extract domain contracts, clean arch fix
  ├── 03-mailbox-dashboard-controller.md ← God Object → 4 sub-controllers + 3 services
  ├── 04-mailbox-controller.md          ← Feature Envy fix, 159-line listener split
  ├── 05-thread-controller.md           ← Deep nesting, bumpy road fix
@@ -148,10 +148,10 @@ Tài liệu chia làm 3 phần, đọc theo thứ tự:
  └── 08-shared-infrastructure.md       ← AppEventBus + GetxService implementation
 ```
 
-**Kiến trúc sau refactor:**
+**Post-refactor architecture:**
 
 ```
- TRƯỚC                              SAU
+ BEFORE                             AFTER
  ──────────────────────────────     ──────────────────────────────────────
  MailboxDashBoardController         AppEventBus (GetxService · permanent)
    3,508 lines · 43 deps              sealed AppEvent · dispatch/subscribe
@@ -204,14 +204,14 @@ Tài liệu chia làm 3 phần, đọc theo thứ tự:
  Phase 4                                              ████████
  Cleanup & Regression
  ──────────────────────────────────────────────────────────
- Tổng: ~5–8 tháng · chạy song song với roadmap sản phẩm
+ Total: ~5–8 months · running in parallel with the product roadmap
 ```
 
 ---
 
-## Ràng buộc
+## Constraints
 
-- **Giữ nguyên GetX** — GetxController, `.obs`, `Obx()`, `GetPage`, `Get.toNamed()`
-- **Không migrate framework** — không Riverpod, không Provider
-- **Strangler Fig Pattern** — refactor dần, không rewrite toàn bộ
-- **Không block roadmap** — Phase 3 (HIGH RISK) tránh release window
+- **Keep GetX** — GetxController, `.obs`, `Obx()`, `GetPage`, `Get.toNamed()`
+- **No framework migration** — no Riverpod, no Provider
+- **Strangler Fig Pattern** — incremental refactor, no full rewrite
+- **Don't block the roadmap** — Phase 3 (HIGH RISK) avoids release windows
