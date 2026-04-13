@@ -27,6 +27,170 @@
 
 ---
 
+## Sơ đồ phân bổ vấn đề
+
+> 14 vấn đề phân bố theo 3 vòng quỹ đạo quanh dự án — vòng trong cùng là nghiêm trọng nhất.
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1100" style="width:100%;max-width:900px;display:block;margin:1.5rem auto;border-radius:12px;">
+  <defs>
+    <radialGradient id="cg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </radialGradient>
+  </defs>
+  <rect width="1100" height="1100" fill="#0f172a" rx="16"/>
+
+  <!-- Orbit rings -->
+  <circle cx="550" cy="550" r="150" fill="none" stroke="#ef444430" stroke-width="1.5" stroke-dasharray="8,5"/>
+  <circle cx="550" cy="550" r="280" fill="none" stroke="#f9731630" stroke-width="1.5" stroke-dasharray="8,5"/>
+  <circle cx="550" cy="550" r="405" fill="none" stroke="#eab30830" stroke-width="1.5" stroke-dasharray="8,5"/>
+
+  <!-- Ring labels -->
+  <text x="550" y="397" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#ef444488">● Critical</text>
+  <text x="550" y="267" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#f9731688">● High</text>
+  <text x="550" y="142" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#eab30888">● Medium</text>
+
+  <!-- Lines center → Critical -->
+  <line x1="550" y1="550" x2="550" y2="400" stroke="#ef444428" stroke-width="1"/>
+  <line x1="550" y1="550" x2="700" y2="550" stroke="#ef444428" stroke-width="1"/>
+  <line x1="550" y1="550" x2="550" y2="700" stroke="#ef444428" stroke-width="1"/>
+  <line x1="550" y1="550" x2="400" y2="550" stroke="#ef444428" stroke-width="1"/>
+  <!-- Lines center → High -->
+  <line x1="550" y1="550" x2="720" y2="330" stroke="#f9731628" stroke-width="1"/>
+  <line x1="550" y1="550" x2="800" y2="650" stroke="#f9731628" stroke-width="1"/>
+  <line x1="550" y1="550" x2="550" y2="835" stroke="#f9731628" stroke-width="1"/>
+  <line x1="550" y1="550" x2="300" y2="650" stroke="#f9731628" stroke-width="1"/>
+  <line x1="550" y1="550" x2="380" y2="330" stroke="#f9731628" stroke-width="1"/>
+  <!-- Lines center → Medium -->
+  <line x1="550" y1="550" x2="930" y2="435" stroke="#eab30828" stroke-width="1"/>
+  <line x1="550" y1="550" x2="790" y2="875" stroke="#eab30828" stroke-width="1"/>
+  <line x1="550" y1="550" x2="310" y2="875" stroke="#eab30828" stroke-width="1"/>
+  <line x1="550" y1="550" x2="160" y2="435" stroke="#eab30828" stroke-width="1"/>
+  <line x1="550" y1="550" x2="550" y2="145" stroke="#eab30828" stroke-width="1"/>
+
+  <!-- Center node -->
+  <circle cx="550" cy="550" r="70" fill="url(#cg)" stroke="#60a5fa" stroke-width="2.5"/>
+  <text x="550" y="540" text-anchor="middle" font-family="monospace,ui-monospace" font-size="15" font-weight="bold" fill="white">Tmail</text>
+  <text x="550" y="558" text-anchor="middle" font-family="monospace,ui-monospace" font-size="13" fill="#93c5fd">Flutter</text>
+  <text x="550" y="575" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" fill="#bfdbfe">7 controllers</text>
+
+  <!-- CRITICAL nodes (r≈150) -->
+  <!-- #1 Constructor Over-Injection — top -->
+  <g transform="translate(550,400)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b0808" stroke="#ef4444" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fca5a5">#1 · Critical</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">Constructor</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">Over-Injection</text>
+  </g>
+  <!-- #2 Large Method — right -->
+  <g transform="translate(700,550)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b0808" stroke="#ef4444" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fca5a5">#2 · Critical</text>
+    <text x="0" y="7" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">Large Method</text>
+    <text x="0" y="19" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">&gt;30 lines</text>
+  </g>
+  <!-- #3 Complex Method — bottom -->
+  <g transform="translate(550,700)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b0808" stroke="#ef4444" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fca5a5">#3 · Critical</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">Complex Method</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">cyclomatic &gt;10</text>
+  </g>
+  <!-- #14 BaseController God Class — left -->
+  <g transform="translate(400,550)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b0808" stroke="#ef4444" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fca5a5">#14 · Critical</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">BaseController</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">God Class</text>
+  </g>
+
+  <!-- HIGH nodes (r≈280) -->
+  <!-- #4 Bumpy Road — upper-right -->
+  <g transform="translate(720,330)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b1206" stroke="#f97316" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fdba74">#4 · High</text>
+    <text x="0" y="7" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">Bumpy Road</text>
+    <text x="0" y="19" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">5+ if-else chain</text>
+  </g>
+  <!-- #5 Deep Nested Complexity — right-bottom -->
+  <g transform="translate(800,650)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b1206" stroke="#f97316" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fdba74">#5 · High</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">Deep Nested</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">Complexity 4+</text>
+  </g>
+  <!-- #6 Low Cohesion — bottom -->
+  <g transform="translate(550,835)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b1206" stroke="#f97316" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fdba74">#6 · High</text>
+    <text x="0" y="7" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">Low Cohesion</text>
+    <text x="0" y="19" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">tất cả controllers</text>
+  </g>
+  <!-- #7 Excess Data Declarations — left-bottom -->
+  <g transform="translate(300,650)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b1206" stroke="#f97316" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fdba74">#7 · High</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">Excess Data</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">Declarations</text>
+  </g>
+  <!-- #8 Feature Envy — upper-left -->
+  <g transform="translate(380,330)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b1206" stroke="#f97316" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fdba74">#8 · High</text>
+    <text x="0" y="7" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">Feature Envy</text>
+    <text x="0" y="19" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">logic sai chỗ</text>
+  </g>
+
+  <!-- MEDIUM nodes (r≈405) -->
+  <!-- #9 Code Health Degradations — right -->
+  <g transform="translate(930,435)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b2000" stroke="#eab308" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fde047">#9 · Medium</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Code Health</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Degradations</text>
+  </g>
+  <!-- #10 Excess Function Arguments — lower-right -->
+  <g transform="translate(790,875)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b2000" stroke="#eab308" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fde047">#10 · Medium</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Excess Func</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Arguments 5+</text>
+  </g>
+  <!-- #11 Primitive Obsession — lower-left -->
+  <g transform="translate(310,875)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b2000" stroke="#eab308" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fde047">#11 · Medium</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Primitive</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Obsession</text>
+  </g>
+  <!-- #12 Temporal Coupling — left -->
+  <g transform="translate(160,435)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b2000" stroke="#eab308" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fde047">#12 · Medium</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Temporal</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Coupling</text>
+  </g>
+  <!-- #13 Mixed Abstraction Levels — top -->
+  <g transform="translate(550,145)">
+    <rect x="-64" y="-26" width="128" height="52" rx="8" fill="#3b2000" stroke="#eab308" stroke-width="1.5"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" font-weight="bold" fill="#fde047">#13 · Medium</text>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Mixed Abstraction</text>
+    <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Levels</text>
+  </g>
+
+  <!-- Legend -->
+  <rect x="28" y="28" width="198" height="95" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="127" y="50" text-anchor="middle" font-family="monospace,ui-monospace" font-size="11" font-weight="bold" fill="#94a3b8">Severity</text>
+  <rect x="43" y="60" width="12" height="12" rx="3" fill="#ef4444"/>
+  <text x="61" y="71" font-family="monospace,ui-monospace" font-size="10" fill="#fca5a5">Critical — 4 issues</text>
+  <rect x="43" y="78" width="12" height="12" rx="3" fill="#f97316"/>
+  <text x="61" y="89" font-family="monospace,ui-monospace" font-size="10" fill="#fdba74">High — 5 issues</text>
+  <rect x="43" y="96" width="12" height="12" rx="3" fill="#eab308"/>
+  <text x="61" y="107" font-family="monospace,ui-monospace" font-size="10" fill="#fde047">Medium — 5 issues</text>
+</svg>
+
+---
+
 ## Sơ đồ mức độ nghiêm trọng theo controller
 
 > 🔴 Critical &nbsp; 🟠 High &nbsp; 🟡 Medium &nbsp; ⚪ Không ảnh hưởng
