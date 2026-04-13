@@ -78,7 +78,9 @@ class AppEventBus extends GetxService {
   Stream<AppEvent> get stream => _controller.stream;
 
   void dispatch(AppEvent event) {
-    _controller.add(event);
+    if (!_controller.isClosed) { // guard: tránh dispatch sau khi service bị dispose
+      _controller.add(event);
+    }
   }
 
   @override
@@ -88,6 +90,10 @@ class AppEventBus extends GetxService {
   }
 }
 ```
+
+> **Lưu ý lifecycle:** `GetxService` với `permanent: true` **không tự động gọi `onClose()`** khi route thay đổi — nó chỉ được gọi khi `Get.delete<AppEventBus>(force: true)` hoặc `Get.reset()` được gọi tường minh (ví dụ: trong logout flow). Do đó `_controller.close()` trong `onClose()` là phòng thủ cho trường hợp app reset, không phải cleanup thông thường.
+>
+> **Memory leak thực sự cần lo:** Không phải `StreamController` (sống cùng process), mà là các **subscriptions trong controller**. Xem `EventBusSubscriberMixin` bên dưới.
 
 ### AppEvent sealed class
 

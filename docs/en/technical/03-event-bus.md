@@ -78,7 +78,9 @@ class AppEventBus extends GetxService {
   Stream<AppEvent> get stream => _controller.stream;
 
   void dispatch(AppEvent event) {
-    _controller.add(event);
+    if (!_controller.isClosed) { // guard: prevent dispatch after service is disposed
+      _controller.add(event);
+    }
   }
 
   @override
@@ -88,6 +90,10 @@ class AppEventBus extends GetxService {
   }
 }
 ```
+
+> **Lifecycle note:** `GetxService` with `permanent: true` does **not automatically call `onClose()`** on route changes — it is only triggered by an explicit `Get.delete<AppEventBus>(force: true)` or `Get.reset()` (e.g. during a logout flow). So `_controller.close()` in `onClose()` is a defensive measure for app-reset scenarios, not routine cleanup.
+>
+> **The real memory leak risk:** Not the `StreamController` (it lives with the process), but **subscriptions inside controllers**. See `EventBusSubscriberMixin` below.
 
 ### AppEvent sealed class
 

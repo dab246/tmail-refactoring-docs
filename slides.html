@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADR-0076 — Tmail Flutter Refactoring</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:        #0f1117;
+    --surface:   #1a1d27;
+    --border:    #2a2d3e;
+    --accent:    #7c6af7;
+    --accent2:   #22d3ee;
+    --danger:    #f87171;
+    --success:   #4ade80;
+    --warning:   #fbbf24;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --code-bg:   #141820;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── Deck ── */
+  .deck { width: 100%; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 48px 64px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(60px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+    transition: opacity .25s ease, transform .25s ease;
+  }
+
+  /* ── Progress bar ── */
+  #progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .3s ease;
+    z-index: 100;
+  }
+
+  /* ── Slide counter ── */
+  #counter {
+    position: fixed;
+    bottom: 20px; right: 28px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: monospace;
+    z-index: 100;
+  }
+
+  /* ── Nav hint ── */
+  #hint {
+    position: fixed;
+    bottom: 20px; left: 28px;
+    font-size: 11px;
+    color: var(--muted);
+    z-index: 100;
+  }
+
+  /* ── Typography ── */
+  .slide-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 20px;
+  }
+  h2 {
+    font-size: clamp(24px, 3vw, 38px);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 24px;
+  }
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--accent2);
+  }
+  p, li {
+    font-size: clamp(14px, 1.6vw, 18px);
+    line-height: 1.7;
+    color: #cbd5e1;
+  }
+  .lead {
+    font-size: clamp(16px, 2vw, 22px);
+    color: #94a3b8;
+    max-width: 700px;
+    text-align: center;
+  }
+
+  /* ── Gradient text ── */
+  .grad {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+  .card-danger { border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.05); }
+  .card-success { border-color: rgba(74,222,128,.35); background: rgba(74,222,128,.04); }
+  .card-accent { border-color: rgba(124,106,247,.4); background: rgba(124,106,247,.06); }
+  .card-accent2 { border-color: rgba(34,211,238,.35); background: rgba(34,211,238,.04); }
+
+  /* ── Code block ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+    font-size: clamp(10px, 1.1vw, 13px);
+    line-height: 1.6;
+    overflow: auto;
+    white-space: pre;
+    color: #a5b4fc;
+    max-height: 320px;
+  }
+  .cm { color: var(--muted); }
+  .ck { color: #c084fc; }
+  .cs { color: #86efac; }
+  .cc { color: var(--accent2); }
+  .ca { color: #fde68a; }
+  .cd { color: var(--danger); }
+
+  /* ── Grid layouts ── */
+  .col2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; }
+  .col3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; }
+  .col-60-40 { display: grid; grid-template-columns: 60fr 40fr; gap: 28px; width: 100%; align-items: start; }
+
+  /* ── Badge / pill ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-red    { background: rgba(248,113,113,.15); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+  .badge-green  { background: rgba(74,222,128,.12); color: var(--success); border: 1px solid rgba(74,222,128,.3); }
+  .badge-purple { background: rgba(124,106,247,.15); color: #a78bfa; border: 1px solid rgba(124,106,247,.35); }
+  .badge-cyan   { background: rgba(34,211,238,.12); color: var(--accent2); border: 1px solid rgba(34,211,238,.3); }
+
+  /* ── Arrow / flow ── */
+  .arrow { color: var(--muted); font-size: 20px; }
+  .flow {
+    display: flex; align-items: center; gap: 12px;
+    flex-wrap: wrap;
+  }
+  .flow-v { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+  /* ── Metric row ── */
+  .metric { text-align: center; }
+  .metric .num {
+    font-size: clamp(28px, 3.5vw, 48px);
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .metric .label { font-size: 12px; color: var(--muted); }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; padding: 10px 14px; color: var(--muted); font-weight: 600;
+       font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+       border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid rgba(42,45,62,.6); }
+  tr:last-child td { border-bottom: none; }
+  .t-red   { color: var(--danger); }
+  .t-green { color: var(--success); }
+  .t-muted { color: var(--muted); }
+
+  /* ── List ── */
+  ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  ul li::before { content: '▸'; color: var(--accent); margin-right: 10px; font-size: .85em; }
+  ul.check li::before { content: '✓'; color: var(--success); }
+  ul.cross li::before { content: '✗'; color: var(--danger); }
+
+  /* ── Phase timeline ── */
+  .phases { display: flex; gap: 0; width: 100%; }
+  .phase {
+    flex: 1;
+    padding: 14px 12px;
+    border-right: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .phase:last-child { border-right: none; }
+  .phase .p-name { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .phase .p-tag  { font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+  .phase .p-bar  {
+    height: 4px; border-radius: 99px;
+    margin-bottom: 8px;
+  }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; width: 100%; }
+
+  /* ── Title slide special ── */
+  .slide-title { background: radial-gradient(ellipse at 60% 40%, rgba(124,106,247,.12) 0%, transparent 70%); }
+
+  /* ── Slide-specific width caps ── */
+  .narrow { max-width: 900px; width: 100%; }
+  .wide   { max-width: 1200px; width: 100%; }
+
+  /* ── Scrollable area inside slide ── */
+  .scroll { overflow-y: auto; max-height: calc(100vh - 160px); padding-right: 4px; }
+  .scroll::-webkit-scrollbar { width: 4px; }
+  .scroll::-webkit-scrollbar-track { background: transparent; }
+  .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="hint">← → Space · Navigate slides</div>
+
+<div class="deck">
+
+  <!-- ═══════════════════════════════════════════ SLIDE 1 — TITLE -->
+  <div class="slide slide-title active">
+    <div class="narrow" style="text-align:center">
+      <div class="slide-tag">ADR-0076 · Tmail Flutter</div>
+      <h1>Refactoring<br><span class="grad">Presentation Layer</span></h1>
+      <p class="lead" style="margin: 0 auto 36px">
+        Giải quyết God Object, Tight Coupling và Feature Envy<br>
+        trong kiến trúc Flutter + GetX của tmail
+      </p>
+      <div class="flow" style="justify-content:center; gap:12px">
+        <span class="badge badge-purple">GetxService</span>
+        <span class="badge badge-cyan">AppEventBus</span>
+        <span class="badge badge-green">Strangler Fig</span>
+        <span class="badge badge-red">≤ 300 lines/ctrl</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 2 — SCALE -->
+  <div class="slide">
+    <div class="wide scroll">
+      <div class="slide-tag">Bối cảnh</div>
+      <h2>Codebase hiện tại — Con số thực tế</h2>
+      <div class="col3" style="margin-bottom:28px">
+        <div class="card metric">
+          <div class="num t-red">3,508</div>
+          <div class="label">lines — MailboxDashBoardController</div>
+        </div>
+        <div class="card metric">
+          <div class="num t-red">42</div>
+          <div class="label">Rx fields trong 1 controller</div>
+        </div>
+        <div class="card metric">
+          <div class="num t-red">29</div>
+          <div class="label">interactors trong 1 constructor</div>
+        </div>
+      </div>
+      <div class="col3">
+        <div class="card metric">
+          <div class="num" style="color:var(--warning)">1,625</div>
+          <div class="label">lines — ThreadController</div>
+        </div>
+        <div class="card metric">
+          <div class="num" style="color:var(--warning)">1,602</div>
+          <div class="label">lines — MailboxController</div>
+        </div>
+        <div class="card metric">
+          <div class="num" style="color:var(--warning)">75+</div>
+          <div class="label">lần <code>Get.find&lt;Dashboard&gt;()</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 3 — TWO PROBLEMS -->
+  <div class="slide">
+    <div class="wide">
+      <div class="slide-tag">Phân tích</div>
+      <h2>2 Vấn đề kỹ thuật cốt lõi</h2>
+      <div class="col2">
+        <div class="card card-danger">
+          <h3 style="color:var(--danger)">⚠ Vấn đề A — Shared State</h3>
+          <p style="font-size:13px; color:var(--muted); margin-bottom:12px">"State của app nằm ở đâu?"</p>
+          <ul style="font-size:14px">
+            <li><strong>42 Rx fields</strong> trong MailboxDashBoardController</li>
+            <li>5 controllers phụ thuộc vào 1 God Object</li>
+            <li>Không thể xóa God Object — ai cũng cần nó</li>
+            <li>Test cần mock toàn bộ Dashboard (40+ lines setUp)</li>
+          </ul>
+        </div>
+        <div class="card card-danger">
+          <h3 style="color:var(--danger)">⚠ Vấn đề B — Inter-Controller Comm</h3>
+          <p style="font-size:13px; color:var(--muted); margin-bottom:12px">"Controller A thông báo cho B thế nào?"</p>
+          <ul style="font-size:14px">
+            <li><code>ever(dashboard.dashBoardAction, callback)</code></li>
+            <li>Callback closures <strong>85 – 159 lines</strong></li>
+            <li>Không type-safe: <code>Rxn&lt;UIAction&gt;</code></li>
+            <li>Mọi controller nhận noise từ unrelated actions</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px; text-align:center; padding:16px">
+        <p style="font-size:14px; color:var(--muted)">
+          Hai vấn đề này <strong style="color:var(--text)">liên quan nhau</strong> —
+          giải quyết A không xong nếu chưa giải quyết B, và ngược lại.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 4 — PROBLEM A DEEP -->
+  <div class="slide">
+    <div class="wide">
+      <div class="slide-tag">Vấn đề A — Chi tiết</div>
+      <h2>God Object: Ai cũng biết, ai cũng phụ thuộc</h2>
+      <div class="col-60-40">
+        <pre><span class="cm">// Hiện tại: tất cả state tập trung 1 chỗ</span>
+<span class="ck">class</span> <span class="cc">MailboxDashBoardController</span> {
+  <span class="cm">// 42 Rx fields</span>
+  <span class="ck">final</span> emailList = &lt;PresentationEmail&gt;[].obs;
+  <span class="ck">final</span> selectedMailbox = Rxn&lt;PresentationMailbox&gt;();
+  <span class="ck">final</span> isLoading = <span class="cs">false</span>.obs;
+  <span class="ck">final</span> accountId = Rxn&lt;AccountId&gt;();
+  <span class="cm">// ... 38 fields nữa</span>
+
+  <span class="cm">// 29 interactors trong constructor</span>
+  <span class="cc">MailboxDashBoardController</span>(
+    <span class="ck">this</span>._markAsReadInteractor,
+    <span class="ck">this</span>._moveEmailInteractor,
+    <span class="cm">// ... 27 cái nữa</span>
+  );
+}
+
+<span class="cm">// 5 controllers phụ thuộc:</span>
+<span class="ck">class</span> <span class="cc">ThreadController</span> {
+  ThreadController() {
+    <span class="cm">// Đọc state từ God Object</span>
+    Get.find&lt;MailboxDashBoardController&gt;()
+        .emailList;
+  }
+}</pre>
+        <div style="display:flex; flex-direction:column; gap:16px">
+          <div class="card card-danger">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:8px">HỆ QUẢ</div>
+            <ul style="font-size:13px">
+              <li>God Object không thể xóa</li>
+              <li>God Object không thể tách nhỏ</li>
+              <li>Circular dependency risk</li>
+              <li>Test phức tạp, flaky</li>
+            </ul>
+          </div>
+          <div class="card" style="font-size:13px">
+            <div style="color:var(--muted); margin-bottom:8px; font-size:12px">5 CONTROLLERS PHỤ THUỘC</div>
+            <div style="display:flex; flex-direction:column; gap:6px">
+              <span class="badge badge-red" style="justify-content:center">MailboxController</span>
+              <span class="badge badge-red" style="justify-content:center">ThreadController</span>
+              <span class="badge badge-red" style="justify-content:center">SingleEmailController</span>
+              <span class="badge badge-red" style="justify-content:center">SearchEmailController</span>
+              <span class="badge badge-red" style="justify-content:center">ComposerController</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 5 — PROBLEM B DEEP -->
+  <div class="slide">
+    <div class="wide">
+      <div class="slide-tag">Vấn đề B — Chi tiết</div>
+      <h2>Rxn&lt;UIAction&gt;: Callback spaghetti 159 lines</h2>
+      <div class="col-60-40">
+        <pre><span class="cm">// ThreadController — 85 lines của kinh dị này:</span>
+ever(mailboxDashBoardController.dashBoardAction,
+  (action) {
+    <span class="ck">if</span> (action <span class="ck">is</span> <span class="cc">SelectEmailAction</span>) {
+      <span class="cm">// email concern - 12 lines</span>
+    } <span class="ck">else if</span> (action <span class="ck">is</span> <span class="cc">RefreshEmailAction</span>) {
+      <span class="cm">// email concern - 8 lines</span>
+    } <span class="ck">else if</span> (action <span class="ck">is</span> <span class="cc">StartSearchEmailAction</span>) {
+      <span class="cm">// search concern - 10 lines</span>
+    } <span class="ck">else if</span> (action <span class="ck">is</span> <span class="cc">CancelSearchEmailAction</span>) {
+      <span class="cm">// search concern - 6 lines</span>
+    } <span class="ck">else if</span> (action <span class="ck">is</span> <span class="cc">FilterMessageAction</span>) {
+      <span class="cm">// filter concern - 15 lines</span>
+    }
+    <span class="cm">// ... 8 types nữa — 85 lines tổng</span>
+  }
+);
+
+<span class="cm">// MailboxController — ever() khác: 159 lines, 7 types</span>
+ever(mailboxDashBoardController.mailboxUIAction,
+  (action) { <span class="cm">/* ... */</span> }
+);</pre>
+        <div style="display:flex; flex-direction:column; gap:14px">
+          <div class="card card-danger">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:8px">VẤN ĐỀ</div>
+            <ul style="font-size:13px">
+              <li>Không type-safe tại compile time</li>
+              <li>Vi phạm Single Responsibility</li>
+              <li>Vi phạm Open-Closed Principle</li>
+              <li>Thêm action type mới → sửa closure cũ</li>
+              <li>Mọi controller nhận mọi action (noise)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:6px">TIGHT COUPLING</div>
+            <p style="font-size:13px">
+              Consumer <strong>phải biết</strong> tên field của God Object:<br>
+              <code style="color:var(--danger); font-size:12px">dashboard.dashBoardAction</code><br>
+              <code style="color:var(--danger); font-size:12px">dashboard.mailboxUIAction</code><br>
+              <code style="color:var(--danger); font-size:12px">dashboard.emailUIAction</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 6 — SOLUTION OVERVIEW -->
+  <div class="slide">
+    <div class="wide">
+      <div class="slide-tag">Giải pháp</div>
+      <h2>2 Pillars — Giải quyết đồng thời cả 2 vấn đề</h2>
+      <div class="col2" style="margin-bottom:24px">
+        <div class="card card-accent">
+          <div class="flow" style="margin-bottom:12px">
+            <span class="badge badge-purple">Pillar 1</span>
+            <h3 style="margin:0">GetxService</h3>
+          </div>
+          <p style="font-size:14px; margin-bottom:12px">Thay thế God Object bằng các <strong>Shared State Services</strong> nhỏ, có trách nhiệm rõ ràng.</p>
+          <ul class="check" style="font-size:13px">
+            <li>EmailListStateService</li>
+            <li>ComposerStateService</li>
+            <li>DragDropStateService</li>
+          </ul>
+          <div style="margin-top:12px; font-size:12px; color:var(--muted)">→ Giải quyết Vấn đề A</div>
+        </div>
+        <div class="card card-accent2">
+          <div class="flow" style="margin-bottom:12px">
+            <span class="badge badge-cyan">Pillar 2</span>
+            <h3 style="margin:0">AppEventBus</h3>
+          </div>
+          <p style="font-size:14px; margin-bottom:12px">Thay thế <code>Rxn&lt;UIAction&gt; + ever()</code> bằng <strong>typed pub/sub events</strong>.</p>
+          <ul class="check" style="font-size:13px">
+            <li>sealed class AppEvent</li>
+            <li>whereType&lt;T&gt;() filtering</li>
+            <li>EventBusSubscriberMixin</li>
+          </ul>
+          <div style="margin-top:12px; font-size:12px; color:var(--muted)">→ Giải quyết Vấn đề B</div>
+        </div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="flow" style="justify-content:space-around">
+          <div class="metric">
+            <div class="num t-red">3,508</div>
+            <div class="label">God Object lines</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="metric">
+            <div class="num t-green">~200</div>
+            <div class="label">Orchestrator (MDC)</div>
+          </div>
+          <div style="width:1px; background:var(--border); height:40px"></div>
+          <div class="metric">
+            <div class="num t-red">75+</div>
+            <div class="label">Get.find() calls</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="metric">
+            <div class="num t-green">0</div>
+            <div class="label">Cross-ctrl coupling</div>
+          </div>
+          <div style="width:1px; background:var(--border); height:40px"></div>
+          <div class="metric">
+            <div class="num t-red">159</div>
+            <div class="label">line callbacks</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="metric">
+            <div class="num t-green">0</div>
+            <div class="label">if-else chains</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 7 — APPENTBUS -->
+  <div class="slide">
+    <div class="wide scroll">
+      <div class="slide-tag">Pillar 2 — AppEventBus</div>
+      <h2>AppEventBus: Type-safe, Zero Coupling</h2>
+      <div class="col2">
+        <div>
+          <pre><span class="ck">class</span> <span class="cc">AppEventBus</span> <span class="ck">extends</span> <span class="ca">GetxService</span> {
+  <span class="ck">final</span> _ctrl =
+    StreamController&lt;AppEvent&gt;.broadcast();
+
+  Stream&lt;AppEvent&gt; <span class="ck">get</span> stream =&gt; _ctrl.stream;
+
+  <span class="ck">void</span> dispatch(AppEvent event) {
+    <span class="ck">if</span> (!_ctrl.isClosed) _ctrl.add(event);
+  }
+
+  <span class="ck">@override</span>
+  <span class="ck">void</span> onClose() {
+    _ctrl.close();     <span class="cm">// cleanup khi logout</span>
+    <span class="ck">super</span>.onClose();
+  }
+}
+
+<span class="cm">// Sealed class — compile-time exhaustive</span>
+<span class="ck">sealed class</span> <span class="cc">AppEvent</span> {}
+
+<span class="ck">final class</span> <span class="cc">MailboxSelectedEvent</span>
+    <span class="ck">extends</span> <span class="ca">AppEvent</span> {
+  <span class="ck">final</span> PresentationMailbox mailbox;
+  <span class="cc">MailboxSelectedEvent</span>(<span class="ck">this</span>.mailbox);
+}
+
+<span class="ck">final class</span> <span class="cc">EmailDeletedEvent</span>
+    <span class="ck">extends</span> <span class="ca">AppEvent</span> {
+  <span class="ck">final</span> List&lt;EmailId&gt; emailIds;
+  <span class="cc">EmailDeletedEvent</span>(<span class="ck">this</span>.emailIds);
+}</pre>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:16px">
+          <pre><span class="cm">// Subscriber — chỉ nhận type mình cần</span>
+<span class="ck">class</span> <span class="cc">ThreadController</span>
+    <span class="ck">extends</span> <span class="ca">BaseController</span>
+    <span class="ck">with</span> EventBusSubscriberMixin {
+
+  <span class="ck">@override</span>
+  <span class="ck">void</span> onInit() {
+    <span class="ck">super</span>.onInit();
+    <span class="cm">// Chỉ nhận MailboxSelectedEvent</span>
+    _eventBus.stream
+      .whereType&lt;MailboxSelectedEvent&gt;()
+      .listen(_onMailboxSelected)
+      .addTo(compositeSubscription);
+      <span class="cm">// ↑ auto cancel khi dispose</span>
+  }
+}</pre>
+          <div class="card card-accent2">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:8px">LỢI ÍCH</div>
+            <ul class="check" style="font-size:13px">
+              <li>Zero coupling — controllers không biết nhau</li>
+              <li>Type-safe tại compile time</li>
+              <li>Thêm event mới → không sửa code cũ (OCP)</li>
+              <li>Auto cleanup — không leak</li>
+              <li>Dễ test: inject mock stream</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 8 — GETXSERVICE -->
+  <div class="slide">
+    <div class="wide scroll">
+      <div class="slide-tag">Pillar 1 — GetxService</div>
+      <h2>GetxService: Shared State có trách nhiệm rõ ràng</h2>
+      <div class="col2">
+        <div>
+          <pre><span class="cm">// Thay 42 Rx fields trong 1 God Object bằng 3 services</span>
+
+<span class="ck">class</span> <span class="cc">EmailListStateService</span>
+    <span class="ck">extends</span> <span class="ca">GetxService</span> {
+  <span class="cm">// Email list domain only</span>
+  <span class="ck">final</span> emails =
+    &lt;PresentationEmail&gt;[].obs;
+  <span class="ck">final</span> isLoading = <span class="cs">false</span>.obs;
+  <span class="ck">final</span> selectedMailbox =
+    Rxn&lt;PresentationMailbox&gt;();
+
+  <span class="ck">void</span> updateEmails(List&lt;PresentationEmail&gt; list) {
+    emails.assignAll(list);
+  }
+}
+
+<span class="ck">class</span> <span class="cc">ComposerStateService</span>
+    <span class="ck">extends</span> <span class="ca">GetxService</span> {
+  <span class="ck">final</span> isOpen = <span class="cs">false</span>.obs;
+  <span class="ck">final</span> arguments = Rxn&lt;ComposerArguments&gt;();
+
+  <span class="ck">void</span> open(ComposerArguments args) { ... }
+  <span class="ck">void</span> close() { ... }
+}
+
+<span class="cm">// Controllers inject qua constructor</span>
+<span class="ck">class</span> <span class="cc">ThreadController</span> <span class="ck">extends</span> <span class="ca">BaseController</span> {
+  <span class="ck">final</span> EmailListStateService _emailState;
+  <span class="cc">ThreadController</span>(<span class="ck">this</span>._emailState, ...);
+}</pre>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px">
+          <div class="card">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:10px">GETXSERVICE VS GETXCONTROLLER</div>
+            <table>
+              <tr><th>GetxController</th><th>GetxService</th></tr>
+              <tr><td>Dispose khi route pop</td><td class="t-green">Sống suốt app</td></tr>
+              <tr><td>State mất khi navigate</td><td class="t-green">State preserved</td></tr>
+              <tr><td>Feature UI logic</td><td class="t-green">Shared state</td></tr>
+            </table>
+          </div>
+          <div class="card card-accent">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:8px">QUY TẮC TRÁNH GOD SERVICE</div>
+            <ul style="font-size:13px">
+              <li>Mỗi service ≤ 10 Rx fields</li>
+              <li>Mỗi service = 1 domain duy nhất</li>
+              <li>Clear state khi SessionExpired</li>
+            </ul>
+          </div>
+          <div class="card card-accent2">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:8px">DOMAIN CONTRACTS</div>
+            <p style="font-size:13px">Controller nhận <code>IEmailListStateContract</code> — không phụ thuộc implementation. Swap, test dễ dàng.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 9 — BEFORE AFTER -->
+  <div class="slide">
+    <div class="wide scroll">
+      <div class="slide-tag">So sánh</div>
+      <h2>Kiến trúc: Trước → Sau</h2>
+      <div class="col2">
+        <div class="card card-danger">
+          <h3 style="color:var(--danger); margin-bottom:14px">TRƯỚC — Tight Coupling</h3>
+          <pre style="font-size:10px; max-height:200px">MailboxDashBoardController (3,508 lines)
+  42 Rx fields
+  29 interactors
+  Rxn&lt;UIAction&gt; dashBoardAction
+  Rxn&lt;UIAction&gt; mailboxUIAction
+       ▲              ▲              ▲
+  Get.find()    Get.find()    Get.find()
+  ever() 159    ever() 85     20+ refs
+       │              │              │
+  MailboxCtrl   ThreadCtrl   SingleEmailCtrl</pre>
+          <ul class="cross" style="font-size:13px; margin-top:12px">
+            <li>Không thể test mà không mock cả God Object</li>
+            <li>Thêm feature → đụng 1 file 3,508 lines</li>
+            <li>Circular dependency tiềm ẩn</li>
+          </ul>
+        </div>
+        <div class="card card-success">
+          <h3 style="color:var(--success); margin-bottom:14px">SAU — Decoupled</h3>
+          <pre style="font-size:10px; max-height:200px">         AppEventBus (GetxService)
+dispatch ◄──────────────────► subscribe
+    │                               │
+EmailActionCtrl            MailboxController
+MailboxNavCtrl              ThreadController
+SendingQueueCtrl          SearchEmailController
+
+GetxService — Shared State
+EmailListStateService  (email domain)
+ComposerStateService   (composer domain)
+DragDropStateService   (drag domain)
+
+MailboxDashBoardController (~200 lines)
+  orchestrator only — no state ownership</pre>
+          <ul class="check" style="font-size:13px; margin-top:12px">
+            <li>Mỗi controller test độc lập</li>
+            <li>Thêm feature → tạo file mới</li>
+            <li>Zero circular dependency</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 10 — COMM BEFORE AFTER -->
+  <div class="slide">
+    <div class="wide scroll">
+      <div class="slide-tag">So sánh — Giao tiếp giữa Controllers</div>
+      <h2>Rxn&lt;UIAction&gt; → AppEventBus</h2>
+      <div class="col2">
+        <div>
+          <div style="font-size:12px; color:var(--danger); font-weight:600; margin-bottom:8px; text-transform:uppercase; letter-spacing:.06em">TRƯỚC — ever() + if-else chain</div>
+          <pre style="font-size:11px"><span class="cm">// ThreadController.dart</span>
+ever(dashboard.dashBoardAction, (action) {
+  <span class="cd">if</span> (action is SelectEmailAction) {
+    <span class="cm">// 12 lines</span>
+  } <span class="cd">else if</span> (action is RefreshAction) {
+    <span class="cm">// 8 lines</span>
+  } <span class="cd">else if</span> (action is StartSearchAction) {
+    <span class="cm">// 10 lines</span>
+  }
+  <span class="cm">// ... 10 types nữa — 85 lines</span>
+});
+
+<span class="cm">// Vấn đề:</span>
+<span class="cm">// - Không type-safe</span>
+<span class="cm">// - Nhận cả unrelated actions</span>
+<span class="cm">// - Vi phạm OCP</span></pre>
+        </div>
+        <div>
+          <div style="font-size:12px; color:var(--success); font-weight:600; margin-bottom:8px; text-transform:uppercase; letter-spacing:.06em">SAU — AppEventBus, whereType</div>
+          <pre style="font-size:11px"><span class="cm">// ThreadController.dart</span>
+<span class="ck">void</span> onInit() {
+  <span class="cm">// Chỉ nhận đúng type cần</span>
+  _eventBus.stream
+    .whereType&lt;<span class="cc">MailboxSelectedEvent</span>&gt;()
+    .listen(_onMailboxSelected)
+    .addTo(compositeSubscription);
+
+  _eventBus.stream
+    .whereType&lt;<span class="cc">EmailDeletedEvent</span>&gt;()
+    .listen(_onEmailDeleted)
+    .addTo(compositeSubscription);
+}
+
+<span class="cm">// Lợi ích:</span>
+<span class="cm">// ✓ Compile-time type safety</span>
+<span class="cm">// ✓ Chỉ nhận event mình quan tâm</span>
+<span class="cm">// ✓ Thêm event: không sửa code cũ</span></pre>
+        </div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <div class="flow" style="justify-content:space-around; flex-wrap:wrap; gap:16px">
+          <div style="text-align:center; font-size:13px"><span class="t-red">30 calls</span> <code>ever()</code><br><span style="color:var(--muted)">→</span> <span class="t-green">0</span></div>
+          <div style="text-align:center; font-size:13px"><span class="t-red">~15</span> <code>Rxn&lt;UIAction&gt;</code><br><span style="color:var(--muted)">→</span> <span class="t-green">0</span></div>
+          <div style="text-align:center; font-size:13px"><span class="t-red">40+ lines</span> test setUp<br><span style="color:var(--muted)">→</span> <span class="t-green">≤5 mocks</span></div>
+          <div style="text-align:center; font-size:13px"><span class="t-red">Circular dep risk</span><br><span style="color:var(--muted)">→</span> <span class="t-green">None</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 11 — RULES -->
+  <div class="slide">
+    <div class="wide">
+      <div class="slide-tag">Nguyên tắc</div>
+      <h2>8 Quy tắc áp dụng toàn codebase</h2>
+      <div class="col2">
+        <div class="card card-success">
+          <h3 style="color:var(--success); margin-bottom:12px">✅ DOs</h3>
+          <ul class="check" style="font-size:13px">
+            <li>Constructor injection only — không <code>Get.find()</code> trong business logic</li>
+            <li>Mỗi controller <strong>≤ 300 lines</strong></li>
+            <li>Mỗi constructor <strong>≤ 8 dependencies</strong></li>
+            <li>Mỗi controller <strong>≤ 10 Rx fields</strong></li>
+            <li>EventBus chỉ cho <strong>cross-feature events</strong></li>
+            <li>Subscribe bằng <code>whereType&lt;T&gt;()</code></li>
+            <li>Auto cleanup: <code>.addTo(compositeSubscription)</code></li>
+            <li>Domain Contracts — không import implementation</li>
+          </ul>
+        </div>
+        <div class="card card-danger">
+          <h3 style="color:var(--danger); margin-bottom:12px">❌ DON'Ts</h3>
+          <ul class="cross" style="font-size:13px">
+            <li>Không còn <code>Rxn&lt;UIAction&gt;</code> observables</li>
+            <li>Không còn <code>Get.find&lt;T&gt;()</code> trong field declarations</li>
+            <li>Không dispatch event trong handler cùng loại (loop)</li>
+            <li>Không subscribe toàn bộ stream rồi if-else</li>
+            <li>Không tạo GetxService chứa tất cả state (God Service)</li>
+            <li>Không dùng EventBus cho UI events (button tap, scroll)</li>
+            <li>Không cast event thủ công (<code>as MyEvent</code>)</li>
+            <li>Không giữ StreamSubscription mà không cancel</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 12 — ROADMAP -->
+  <div class="slide">
+    <div class="wide">
+      <div class="slide-tag">Lộ trình</div>
+      <h2>Strangler Fig Pattern — 4 Phases, ~7 tháng</h2>
+      <div class="card" style="padding:0; overflow:hidden; margin-bottom:20px">
+        <div class="phases">
+          <div class="phase">
+            <div class="p-bar" style="background:linear-gradient(90deg,var(--accent),#a78bfa)"></div>
+            <div class="p-name">Phase 0</div>
+            <div class="p-tag">Apr W15–W18</div>
+            <ul style="font-size:12px; color:#94a3b8">
+              <li>AppEventBus + AppEvent</li>
+              <li>GetxService shells</li>
+              <li>Domain contracts</li>
+              <li>BaseController cleanup</li>
+            </ul>
+          </div>
+          <div class="phase">
+            <div class="p-bar" style="background:linear-gradient(90deg,var(--accent2),#67e8f9)"></div>
+            <div class="p-name">Phase 1</div>
+            <div class="p-tag">May W19–Jun W28</div>
+            <ul style="font-size:12px; color:#94a3b8">
+              <li>Constructor Injection</li>
+              <li>Leaf controllers first</li>
+              <li>Thread, SingleEmail, Mailbox</li>
+            </ul>
+          </div>
+          <div class="phase">
+            <div class="p-bar" style="background:linear-gradient(90deg,var(--success),#86efac)"></div>
+            <div class="p-name">Phase 2</div>
+            <div class="p-tag">Jul–Aug W29–W36</div>
+            <ul style="font-size:12px; color:#94a3b8">
+              <li>Move .obs → GetxService</li>
+              <li>Replace ever() → EventBus</li>
+              <li>Remove Rxn&lt;UIAction&gt;</li>
+            </ul>
+          </div>
+          <div class="phase">
+            <div class="p-bar" style="background:linear-gradient(90deg,var(--warning),#fde68a)"></div>
+            <div class="p-name">Phase 3</div>
+            <div class="p-tag">Sep–Oct · HIGH RISK</div>
+            <ul style="font-size:12px; color:#94a3b8">
+              <li>God Object decomposition</li>
+              <li>Extract EmailActionCtrl</li>
+              <li>Extract SessionCtrl</li>
+              <li>Extract MailboxNavCtrl</li>
+            </ul>
+          </div>
+          <div class="phase">
+            <div class="p-bar" style="background:var(--muted)"></div>
+            <div class="p-name">Phase 4</div>
+            <div class="p-tag">Nov W45+</div>
+            <ul style="font-size:12px; color:#94a3b8">
+              <li>Remove all Get.find()</li>
+              <li>Full regression pass</li>
+              <li>Android + iOS + Web</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:14px">
+        <p style="font-size:13px; color:var(--muted); text-align:center">
+          <strong style="color:var(--text)">Strangler Fig Pattern</strong> — không rewrite toàn bộ, thay từng phần dần dần.
+          Production không bị block. Phases chạy song song với feature development.
+          Phase 3 <strong style="color:var(--warning)">không thực hiện trong release window</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 13 — RISKS -->
+  <div class="slide">
+    <div class="wide">
+      <div class="slide-tag">Rủi ro</div>
+      <h2>Rủi ro & Giảm thiểu</h2>
+      <div class="col2">
+        <div>
+          <h3 style="margin-bottom:12px">GetxService Risks</h3>
+          <table>
+            <tr><th>Rủi ro</th><th>Giảm thiểu</th></tr>
+            <tr>
+              <td class="t-red">Memory — service không dispose</td>
+              <td>≤10 Rx fields/service. Clear khi logout.</td>
+            </tr>
+            <tr>
+              <td class="t-red">God Service mới</td>
+              <td>Rule: 1 domain = 1 service</td>
+            </tr>
+            <tr>
+              <td class="t-red">State stale sau login</td>
+              <td>SessionController dispatch clear event</td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <h3 style="margin-bottom:12px">AppEventBus Risks</h3>
+          <table>
+            <tr><th>Rủi ro</th><th>Giảm thiểu</th></tr>
+            <tr>
+              <td class="t-red">Event Spaghetti</td>
+              <td>Chỉ dùng cho cross-feature events</td>
+            </tr>
+            <tr>
+              <td class="t-red">Circular dispatch (loop)</td>
+              <td>Không dispatch trong handler cùng type</td>
+            </tr>
+            <tr>
+              <td class="t-red">Memory leak subscription</td>
+              <td><code>compositeSubscription</code> auto cancel</td>
+            </tr>
+            <tr>
+              <td class="t-red">Event lost (dispatch trước subscribe)</td>
+              <td>broadcast() — OK, document behavior</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 14 — SUMMARY -->
+  <div class="slide">
+    <div class="narrow" style="text-align:center">
+      <div class="slide-tag">Tóm tắt</div>
+      <h2>ADR-0076 — Quyết định kiến trúc cuối</h2>
+      <div style="display:flex; flex-direction:column; gap:14px; text-align:left; margin: 28px 0">
+        <div class="card card-accent" style="display:flex; gap:16px; align-items:flex-start">
+          <span class="badge badge-purple" style="white-space:nowrap">Vấn đề A</span>
+          <div>
+            <strong>Shared State</strong> → <span style="color:var(--success)">GetxService</span><br>
+            <span style="font-size:13px; color:var(--muted)">EmailListStateService · ComposerStateService · DragDropStateService<br>GetX-native, reactive .obs, constructor injectable, 1 domain/service</span>
+          </div>
+        </div>
+        <div class="card card-accent2" style="display:flex; gap:16px; align-items:flex-start">
+          <span class="badge badge-cyan" style="white-space:nowrap">Vấn đề B</span>
+          <div>
+            <strong>Inter-Controller Comm</strong> → <span style="color:var(--success)">AppEventBus</span><br>
+            <span style="font-size:13px; color:var(--muted)">sealed class AppEvent + whereType&lt;T&gt;()<br>Zero coupling · Type-safe · Testable · Không cần package ngoài</span>
+          </div>
+        </div>
+        <div class="card" style="display:flex; gap:16px; align-items:flex-start">
+          <span class="badge badge-green" style="white-space:nowrap">DI</span>
+          <div>
+            <strong>Over-injection</strong> → <span style="color:var(--success)">Domain Contracts</span><br>
+            <span style="font-size:13px; color:var(--muted)">IEmailListStateContract · IMailboxNavigationContract<br>Tách abstraction khỏi implementation, ISP</span>
+          </div>
+        </div>
+        <div class="card" style="display:flex; gap:16px; align-items:flex-start">
+          <span class="badge badge-red" style="white-space:nowrap">Giữ</span>
+          <div>
+            <strong>GetX state management</strong> — không đổi<br>
+            <span style="font-size:13px; color:var(--muted)">GetxController · .obs · Obx() · GetPage · Get.toNamed</span>
+          </div>
+        </div>
+      </div>
+      <p style="color:var(--muted); font-size:14px">Docs đầy đủ tại <code style="color:var(--accent2)">docs/</code> — 18 markdown files + portal tại <code style="color:var(--accent2)">index.html</code></p>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let current = 0;
+  let animating = false;
+
+  function goTo(n) {
+    if (animating || n === current || n < 0 || n >= slides.length) return;
+    animating = true;
+
+    slides[current].classList.add('exit');
+    slides[current].classList.remove('active');
+
+    setTimeout(() => {
+      slides[current].classList.remove('exit');
+      current = n;
+      slides[current].classList.add('active');
+      updateUI();
+      setTimeout(() => { animating = false; }, 380);
+    }, 260);
+  }
+
+  function updateUI() {
+    const pct = ((current + 1) / slides.length) * 100;
+    document.getElementById('progress').style.width = pct + '%';
+    document.getElementById('counter').textContent =
+      (current + 1) + ' / ' + slides.length;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') {
+      e.preventDefault(); goTo(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault(); goTo(current - 1);
+    } else if (e.key === 'Home') {
+      goTo(0);
+    } else if (e.key === 'End') {
+      goTo(slides.length - 1);
+    }
+  });
+
+  // Touch / swipe
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) dx < 0 ? goTo(current+1) : goTo(current-1);
+  }, {passive:true});
+
+  updateUI();
+</script>
+</body>
+</html>
