@@ -39,17 +39,14 @@
     </radialGradient>
   </defs>
   <rect width="1100" height="1100" fill="#0f172a" rx="16"/>
-
   <!-- Orbit rings -->
   <circle cx="550" cy="550" r="150" fill="none" stroke="#ef444430" stroke-width="1.5" stroke-dasharray="8,5"/>
   <circle cx="550" cy="550" r="280" fill="none" stroke="#f9731630" stroke-width="1.5" stroke-dasharray="8,5"/>
   <circle cx="550" cy="550" r="405" fill="none" stroke="#eab30830" stroke-width="1.5" stroke-dasharray="8,5"/>
-
   <!-- Ring labels -->
   <text x="550" y="397" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#ef444488">● Critical</text>
   <text x="550" y="267" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#f9731688">● High</text>
   <text x="550" y="142" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#eab30888">● Medium</text>
-
   <!-- Lines center → Critical -->
   <line x1="550" y1="550" x2="550" y2="400" stroke="#ef444428" stroke-width="1"/>
   <line x1="550" y1="550" x2="700" y2="550" stroke="#ef444428" stroke-width="1"/>
@@ -67,13 +64,11 @@
   <line x1="550" y1="550" x2="310" y2="875" stroke="#eab30828" stroke-width="1"/>
   <line x1="550" y1="550" x2="160" y2="435" stroke="#eab30828" stroke-width="1"/>
   <line x1="550" y1="550" x2="550" y2="145" stroke="#eab30828" stroke-width="1"/>
-
   <!-- Center node -->
   <circle cx="550" cy="550" r="70" fill="url(#cg)" stroke="#60a5fa" stroke-width="2.5"/>
   <text x="550" y="540" text-anchor="middle" font-family="monospace,ui-monospace" font-size="15" font-weight="bold" fill="white">Tmail</text>
   <text x="550" y="558" text-anchor="middle" font-family="monospace,ui-monospace" font-size="13" fill="#93c5fd">Flutter</text>
   <text x="550" y="575" text-anchor="middle" font-family="monospace,ui-monospace" font-size="10" fill="#bfdbfe">7 controllers</text>
-
   <!-- CRITICAL nodes (r≈150) -->
   <!-- #1 Constructor Over-Injection — top -->
   <g transform="translate(550,400)">
@@ -103,7 +98,6 @@
     <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">BaseController</text>
     <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fecaca">God Class</text>
   </g>
-
   <!-- HIGH nodes (r≈280) -->
   <!-- #4 Bumpy Road — upper-right -->
   <g transform="translate(720,330)">
@@ -140,7 +134,6 @@
     <text x="0" y="7" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">Feature Envy</text>
     <text x="0" y="19" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fed7aa">logic sai chỗ</text>
   </g>
-
   <!-- MEDIUM nodes (r≈405) -->
   <!-- #9 Code Health Degradations — right -->
   <g transform="translate(930,435)">
@@ -177,7 +170,6 @@
     <text x="0" y="5" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Mixed Abstraction</text>
     <text x="0" y="18" text-anchor="middle" font-family="monospace,ui-monospace" font-size="9" fill="#fef08a">Levels</text>
   </g>
-
   <!-- Legend -->
   <rect x="28" y="28" width="198" height="95" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
   <text x="127" y="50" text-anchor="middle" font-family="monospace,ui-monospace" font-size="11" font-weight="bold" fill="#94a3b8">Severity</text>
