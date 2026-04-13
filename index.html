@@ -75,6 +75,14 @@
     }
     #btn-lang:hover { background: #f1f5f9; border-color: #94a3b8; }
     #btn-lang.active-vi { color: #3b82f6; border-color: #3b82f6; background: #eff6ff; }
+    #btn-slides {
+      height: 36px; border: 1px solid #7c6af7; background: #ede9fe;
+      border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 700;
+      color: #6d28d9; transition: all .15s; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; padding: 0 12px;
+      text-decoration: none; gap: 4px;
+    }
+    #btn-slides:hover { background: #ddd6fe; border-color: #6d28d9; }
 
 
     #progress-text { font-size: 13px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
@@ -373,6 +381,7 @@
     <span></span><span></span><span></span>
   </button>
   <button class="nav-btn" id="btn-home" onclick="goHome()" title="Home (H)" style="flex-shrink:0">⌂</button>
+  <a href="slides.html" target="_blank" id="btn-slides" title="Open presentation slides">🎯 Slides</a>
   <button id="btn-lang" onclick="switchLanguage()" title="Switch language (L)">EN</button>
   <div id="header-title">
     Tmail Flutter — Architecture Refactoring
