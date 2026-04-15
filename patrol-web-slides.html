@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrol Web Integration Testing — Tmail Flutter</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:        #0f1117;
+    --surface:   #1a1d27;
+    --border:    #2a2d3e;
+    --accent:    #7c6af7;
+    --accent2:   #22d3ee;
+    --danger:    #f87171;
+    --success:   #4ade80;
+    --warning:   #fbbf24;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --code-bg:   #141820;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .deck { width: 100%; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 48px 64px;
+    opacity: 0; pointer-events: none;
+    transform: translateX(60px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .slide.active  { opacity: 1; pointer-events: auto; transform: translateX(0); }
+  .slide.exit    { opacity: 0; transform: translateX(-60px); transition: opacity .25s ease, transform .25s ease; }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .3s ease; z-index: 100;
+  }
+  #counter {
+    position: fixed; bottom: 20px; right: 28px;
+    font-size: 12px; color: var(--muted); font-family: monospace; z-index: 100;
+  }
+  #hint {
+    position: fixed; bottom: 20px; left: 28px;
+    font-size: 11px; color: var(--muted); z-index: 100;
+  }
+
+  .slide-tag {
+    font-size: 11px; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 16px;
+  }
+  h1 { font-size: clamp(32px, 4vw, 52px); font-weight: 800; line-height: 1.15; margin-bottom: 20px; }
+  h2 { font-size: clamp(22px, 2.8vw, 36px); font-weight: 700; line-height: 1.2; margin-bottom: 24px; }
+  h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; color: var(--accent2); }
+  p, li { font-size: clamp(13px, 1.5vw, 17px); line-height: 1.7; color: #cbd5e1; }
+  .lead { font-size: clamp(15px, 1.9vw, 21px); color: #94a3b8; max-width: 700px; text-align: center; }
+
+  .grad {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px 24px;
+  }
+  .card-danger  { border-color: rgba(248,113,113,.4);  background: rgba(248,113,113,.05); }
+  .card-success { border-color: rgba(74,222,128,.35);  background: rgba(74,222,128,.04); }
+  .card-accent  { border-color: rgba(124,106,247,.4);  background: rgba(124,106,247,.06); }
+  .card-accent2 { border-color: rgba(34,211,238,.35);  background: rgba(34,211,238,.04); }
+  .card-warn    { border-color: rgba(251,191,36,.35);  background: rgba(251,191,36,.04); }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+    font-size: clamp(10px, 1vw, 12.5px); line-height: 1.6;
+    overflow: auto; white-space: pre; color: #a5b4fc; max-height: 280px;
+  }
+  .ck { color: #c084fc; } .cs { color: #86efac; } .cc { color: var(--accent2); }
+  .ca { color: #fde68a; } .cm { color: var(--muted); } .cd { color: var(--danger); }
+
+  .col2   { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+  .col3   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; width: 100%; }
+  .col-55 { display: grid; grid-template-columns: 55fr 45fr; gap: 24px; width: 100%; align-items: start; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600;
+  }
+  .badge-red    { background: rgba(248,113,113,.15); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+  .badge-green  { background: rgba(74,222,128,.12);  color: var(--success); border: 1px solid rgba(74,222,128,.3); }
+  .badge-purple { background: rgba(124,106,247,.15); color: #a78bfa; border: 1px solid rgba(124,106,247,.35); }
+  .badge-cyan   { background: rgba(34,211,238,.12);  color: var(--accent2); border: 1px solid rgba(34,211,238,.3); }
+  .badge-warn   { background: rgba(251,191,36,.12);  color: var(--warning); border: 1px solid rgba(251,191,36,.3); }
+
+  .flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .arrow { color: var(--muted); font-size: 18px; }
+
+  .metric { text-align: center; }
+  .metric .num { font-size: clamp(26px, 3.2vw, 44px); font-weight: 800; line-height: 1; margin-bottom: 6px; }
+  .metric .lbl { font-size: 12px; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 9px 13px; color: var(--muted); font-weight: 600;
+       font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+       border-bottom: 1px solid var(--border); }
+  td { padding: 9px 13px; border-bottom: 1px solid rgba(42,45,62,.6); }
+  tr:last-child td { border-bottom: none; }
+  .t-red { color: var(--danger); } .t-green { color: var(--success); }
+  .t-muted { color: var(--muted); } .t-warn { color: var(--warning); }
+
+  ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  ul li::before { content: '▸'; color: var(--accent); margin-right: 10px; font-size: .85em; }
+  ul.check li::before { content: '✓'; color: var(--success); }
+  ul.cross li::before { content: '✗'; color: var(--danger); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; width: 100%; }
+
+  .slide-title { background: radial-gradient(ellipse at 60% 40%, rgba(124,106,247,.12) 0%, transparent 70%); }
+  .narrow { max-width: 880px; width: 100%; }
+  .wide   { max-width: 1180px; width: 100%; }
+  .scroll { overflow-y: auto; max-height: calc(100vh - 140px); padding-right: 4px; }
+  .scroll::-webkit-scrollbar { width: 4px; }
+  .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  .step-row {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px solid rgba(42,45,62,.5);
+  }
+  .step-row:last-child { border-bottom: none; }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(124,106,247,.2); border: 1px solid rgba(124,106,247,.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #a78bfa;
+  }
+
+  .pr-row {
+    display: flex; gap: 0; width: 100%;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .pr-label {
+    padding: 10px 16px; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; min-width: 60px;
+    border-right: 1px solid var(--border);
+  }
+  .pr-content { padding: 10px 16px; flex: 1; font-size: 13px; color: #94a3b8; }
+  .pr-ci { padding: 10px 14px; font-size: 12px; display: flex; flex-direction: column;
+           gap: 4px; align-items: flex-end; justify-content: center; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="hint">← → Space · Navigate</div>
+
+<div class="deck">
+
+<!-- ═══ SLIDE 1 — TITLE ═══ -->
+<div class="slide slide-title active">
+  <div class="narrow" style="text-align:center">
+    <div class="slide-tag">ADR-0080 · 0081 · 0082 · 0083 · Tmail Flutter</div>
+    <h1>Patrol Web<br><span class="grad">Integration Testing</span></h1>
+    <p class="lead" style="margin: 0 auto 36px">
+      Cross-platform E2E testing architecture for Twake Mail —<br>
+      one test file, all platforms, full SOLID compliance
+    </p>
+    <div class="flow" style="justify-content:center; gap:12px">
+      <span class="badge badge-purple">Abstract Factory</span>
+      <span class="badge badge-cyan">Conditional Export</span>
+      <span class="badge badge-green">SOLID</span>
+      <span class="badge badge-warn">5 PRs</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 2 — WHY ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Context — ADR-0080</div>
+    <h2>Why Patrol on Web?</h2>
+    <div class="col2" style="margin-bottom:20px">
+      <div class="card card-accent">
+        <h3>Twake Mail is multi-platform</h3>
+        <ul>
+          <li>Android &amp; iOS — already covered by Patrol (ADR-0053)</li>
+          <li>Web — growing user base, no E2E coverage yet</li>
+          <li>Same feature, different widget trees per platform</li>
+        </ul>
+      </div>
+      <div class="card card-success">
+        <h3>Patrol 4.x supports Chrome</h3>
+        <ul class="check">
+          <li><code>--device=chrome</code> runs Flutter web tests</li>
+          <li>Same CLI, same Docker backend, no new framework</li>
+          <li>Headless mode for CI (<code>--web-headless=true</code>)</li>
+          <li>Web CSS selector access via <code>WebAutomator</code></li>
+        </ul>
+      </div>
+    </div>
+    <div class="card card-warn">
+      <p style="font-size:14px">
+        <strong style="color:var(--warning)">Key difference from mobile:</strong>
+        Web runs at <code>localhost</code> — no <code>ngrok</code> or <code>jq</code> needed.
+        Same Docker JMAP backend serves both platforms.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 3 — PROBLEMS ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Problem — POC on branch patrol/web</div>
+    <h2>3 Structural Problems</h2>
+    <div class="col3">
+      <div class="card card-danger">
+        <h3 style="color:var(--danger)">SRP Violation</h3>
+        <p style="font-size:14px; margin-bottom:10px">One robot, two platforms:</p>
+        <pre><span class="cm">// Same class</span>
+<span class="ck">Future</span>&lt;<span class="ck">void</span>&gt; addContent() <span class="cm">// mobile</span>
+<span class="ck">Future</span>&lt;<span class="ck">void</span>&gt; addContentWeb() <span class="cm">// web</span></pre>
+        <p style="font-size:12px; color:var(--muted); margin-top:8px">Every platform adds methods to existing robots</p>
+      </div>
+      <div class="card card-danger">
+        <h3 style="color:var(--danger)">DRY Violation</h3>
+        <p style="font-size:14px; margin-bottom:10px">Same flow, written twice:</p>
+        <pre>send_email_scenario.dart
+<span class="cd">web_send_email_scenario.dart</span>
+
+login_with_basic_auth.dart
+<span class="cd">web_login_with_basic_auth.dart</span></pre>
+        <p style="font-size:12px; color:var(--muted); margin-top:8px">Duplicate grows with every new test</p>
+      </div>
+      <div class="card card-danger">
+        <h3 style="color:var(--danger)">OCP Violation</h3>
+        <p style="font-size:14px; margin-bottom:10px">Adding a platform = modifying existing files</p>
+        <pre><span class="cm">// Every new platform forces edits</span>
+<span class="ck">if</span> (platform == <span class="cs">'web'</span>) ...
+<span class="ck">else if</span> (platform == <span class="cs">'desktop'</span>) ...
+<span class="ck">else</span> ...  <span class="cm">// mobile</span></pre>
+        <p style="font-size:12px; color:var(--muted); margin-top:8px">Robots, scenarios, test files all need changes</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 4 — DECISION ═══ -->
+<div class="slide">
+  <div class="narrow" style="text-align:center">
+    <div class="slide-tag">Decision — ADR-0081</div>
+    <h2>Separate <span class="grad">WHAT</span> from <span class="grad">HOW</span></h2>
+    <div class="col2" style="text-align:left; margin-bottom:24px">
+      <div class="card card-accent">
+        <h3>WHAT — Business Flow</h3>
+        <p style="font-size:14px">Scenario: describes what the user does.<br>
+        <strong style="color:var(--text)">Shared across all platforms.</strong><br>
+        Written exactly once.</p>
+      </div>
+      <div class="card card-accent2">
+        <h3>HOW — UI Interaction</h3>
+        <p style="font-size:14px">Robot: describes how to interact with the UI.<br>
+        <strong style="color:var(--text)">Implemented per platform.</strong><br>
+        Only the different parts.</p>
+      </div>
+    </div>
+    <div class="card" style="text-align:left">
+      <p style="font-size:15px">
+        Pattern: <strong style="color:var(--accent)">Abstract Factory</strong> + <strong style="color:var(--accent2)">Interface Segregation</strong><br>
+        Platform selection: <strong style="color:var(--success)">Dart conditional exports</strong> — no <code>if/else</code> in any logic class
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 5 — ARCHITECTURE ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Architecture — ADR-0081</div>
+    <h2>Flow Overview</h2>
+    <div class="col-55">
+      <div>
+        <pre style="font-size:12px; line-height:1.8">
+<span class="ca">Test File</span>  (one file per scenario)
+    │
+    ▼
+<span class="cc">TestBase</span>.runPatrolTest()
+    ├── auto-applies platform tag
+    └── calls <span class="cs">createRobotFactory</span>($)
+              ↑ compile-time conditional export
+              ├── <span class="ck">MobileRobotFactory</span>  (default)
+              └── <span class="ck">WebRobotFactory</span>     (dart.library.html)
+    │  injects into
+    ▼
+<span class="cc">BaseTestScenario</span>(<span class="ck">PatrolIntegrationTester</span> $, <span class="ck">RobotFactory</span> robots)
+    │  uses
+    ▼
+<span class="ca">Abstract Robot Interfaces</span>  ← scenarios depend only on these
+    ├── AbstractComposerRobot
+    └── AbstractThreadRobot
+         │  implemented by
+         ▼
+<span class="cs">Concrete Robots</span>
+    ├── mobile/MobileComposerRobot
+    └── web/WebComposerRobot
+        </pre>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px">
+        <div class="card card-accent">
+          <p style="font-size:13px"><strong>TestBase</strong> is the only class that calls <code>createRobotFactory()</code></p>
+        </div>
+        <div class="card card-success">
+          <p style="font-size:13px">Scenarios and test files <strong>never reference</strong> any platform-specific class</p>
+        </div>
+        <div class="card card-accent2">
+          <p style="font-size:13px">Platform tag (<code>web</code>/<code>mobile</code>) is <strong>auto-applied</strong> by TestBase</p>
+        </div>
+        <div class="card">
+          <p style="font-size:13px">Robots identical across platforms are <strong>reused</strong> — no duplication</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 6 — CONDITIONAL EXPORT ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Key Design #1 — OCP Fix</div>
+    <h2>Dart Conditional Export<br><span class="grad">— No if/else in Logic</span></h2>
+    <div class="col2">
+      <div>
+        <p style="margin-bottom:12px; color:var(--muted); font-size:14px">❌ POC approach — OCP violation</p>
+        <pre><span class="cm">// Logic code must change per new platform</span>
+<span class="ck">if</span> (kIsWeb) <span class="ck">return</span> WebRobotFactory($);
+<span class="ck">return</span> MobileRobotFactory($);</pre>
+      </div>
+      <div>
+        <p style="margin-bottom:12px; color:var(--success); font-size:14px">✓ Proposed — idiomatic Dart</p>
+        <pre><span class="cm">// robot_factory_provider.dart — never changes</span>
+<span class="ck">export</span> <span class="cs">'mobile_robot_factory_provider.dart'</span>
+    <span class="ck">if</span> (dart.library.html) <span class="cs">'web_robot_factory_provider.dart'</span>;
+
+<span class="cm">// Each provider exports one function</span>
+<span class="ck">RobotFactory</span> createRobotFactory(<span class="ck">PatrolIntegrationTester</span> $)
+    =&gt; WebRobotFactory($);</pre>
+      </div>
+    </div>
+    <div class="card card-success" style="margin-top:20px">
+      <div class="flow" style="gap:20px; flex-wrap:nowrap">
+        <span class="badge badge-green" style="white-space:nowrap">Adding a new platform</span>
+        <span class="arrow">→</span>
+        <p style="font-size:14px">Create a new provider file + factory + robot implementations.<br>
+        <strong>Zero existing files are modified.</strong>
+        Same pattern Flutter uses for <code>dart:html</code> vs <code>dart:io</code>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 7 — DI & TEST FILE ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Key Design #2 — DIP + One Test File</div>
+    <h2>Factory via DI · One File per Scenario</h2>
+    <div class="col2">
+      <div>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:10px">BaseTestScenario — zero platform knowledge</p>
+        <pre><span class="ck">abstract class</span> BaseTestScenario <span class="ck">extends</span> BaseScenario {
+  <span class="ck">final</span> RobotFactory robots;  <span class="cm">// injected</span>
+
+  <span class="ck">const</span> BaseTestScenario(<span class="ck">super</span>.$, <span class="ck">this</span>.robots);
+
+  <span class="cc">@override</span>
+  <span class="ck">Future</span>&lt;<span class="ck">void</span>&gt; execute() <span class="ck">async</span> {
+    <span class="ck">await</span> robots.loginRobot().login(...);
+    <span class="ck">await</span> runTestLogic();
+  }
+}</pre>
+        <p style="font-size:13px; color:var(--muted); margin-top:14px; margin-bottom:10px">Scenario — written once, shared</p>
+        <pre><span class="ck">class</span> SendEmailScenario <span class="ck">extends</span> BaseTestScenario {
+  <span class="cc">@override</span>
+  <span class="ck">Future</span>&lt;<span class="ck">void</span>&gt; runTestLogic() <span class="ck">async</span> {
+    <span class="ck">await</span> robots.threadRobot().openComposer();
+    <span class="ck">await</span> robots.composerRobot().addContent(<span class="cs">'Hello'</span>);
+    <span class="ck">await</span> robots.composerRobot().send();
+  }
+}</pre>
+      </div>
+      <div>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:10px">One test file — all platforms</p>
+        <pre><span class="cm">// tests/composer/send_email_test.dart</span>
+<span class="ck">void</span> main() {
+  TestBase().runPatrolTest(
+    description: <span class="cs">'Send email'</span>,
+    scenarioBuilder: ($, robots)
+        =&gt; SendEmailScenario($, robots),
+  );
+}</pre>
+        <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px">
+          <div class="card card-success" style="padding:12px 16px">
+            <p style="font-size:13px">📱 Mobile: <code>--device=android --tags=mobile</code><br>
+            <span style="color:var(--muted)">MobileRobotFactory compiled in</span></p>
+          </div>
+          <div class="card card-accent2" style="padding:12px 16px">
+            <p style="font-size:13px">🌐 Web: <code>--device=chrome --tags=web</code><br>
+            <span style="color:var(--muted)">WebRobotFactory compiled in</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 8 — FOLDER STRUCTURE ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Structure — ADR-0081</div>
+    <h2>Folder Layout</h2>
+    <div class="col2">
+      <pre style="font-size:12px; line-height:1.9">integration_test/
+├── <span class="ca">robots/</span>
+│   ├── <span class="cc">abstract/</span>          <span class="cm"># Interfaces per feature area</span>
+│   │   ├── abstract_composer_robot.dart
+│   │   └── abstract_thread_robot.dart
+│   ├── <span class="cs">mobile/</span>            <span class="cm"># Mobile implementations</span>
+│   │   ├── base_composer_robot.dart  <span class="cm"># shared base</span>
+│   │   └── mobile_composer_robot.dart
+│   └── <span class="ck">web/</span>               <span class="cm"># Web (only where UI differs)</span>
+│       └── web_composer_robot.dart
+├── <span class="ca">factories/</span>
+│   ├── robot_factory.dart            <span class="cm"># Abstract interface</span>
+│   ├── robot_factory_provider.dart   <span class="cm"># Conditional export ← never changes</span>
+│   ├── mobile_robot_factory.dart
+│   ├── mobile_robot_factory_provider.dart
+│   ├── web_robot_factory.dart
+│   └── web_robot_factory_provider.dart
+├── <span class="cs">scenarios/</span>             <span class="cm"># All shared — no web_/mobile_ prefix</span>
+│   └── composer/send_email_scenario.dart
+└── <span class="ca">tests/</span>                 <span class="cm"># One file per scenario</span>
+    └── composer/send_email_test.dart</pre>
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div class="card card-accent">
+          <h3 style="font-size:15px">Abstract layer</h3>
+          <p style="font-size:13px">One interface per feature area. Scenarios depend only on these — never on concrete robots.</p>
+        </div>
+        <div class="card card-success">
+          <h3 style="font-size:15px">Shared base robot</h3>
+          <p style="font-size:13px"><code>BaseComposerRobot</code> holds methods identical across platforms (e.g. <code>send()</code>). Mobile and web only override what genuinely differs.</p>
+        </div>
+        <div class="card card-accent2">
+          <h3 style="font-size:15px">Robot reuse</h3>
+          <p style="font-size:13px">If a robot is identical on all platforms, both factories return the same class. No web variant needed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 9 — HOW TO ADD A TEST ═══ -->
+<div class="slide">
+  <div class="narrow">
+    <div class="slide-tag">Workflow — ADR-0081</div>
+    <h2>Adding a New Test — 6 Steps</h2>
+    <div class="card" style="padding:16px 20px">
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div><strong>UIKeys</strong> — Add <code>ValueKey(UiKeys.xxx)</code> to all platform widget variants in <code>lib/features/base/model/ui_keys.dart</code></div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div><strong>Abstract robot</strong> — Define interface in <code>robots/abstract/</code> if not yet existing for the feature area</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div><strong>Implement</strong> — <code>robots/mobile/</code> and <code>robots/web/</code>. Shared methods → base class. Identical robot → reuse same class in both factories</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">4</div>
+        <div><strong>Register</strong> — Add the robot to <code>MobileRobotFactory</code> and <code>WebRobotFactory</code></div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">5</div>
+        <div><strong>Scenario</strong> — Write one scenario in <code>scenarios/</code> using abstract robots only — no platform awareness</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">6</div>
+        <div><strong>Test file</strong> — <code>scenarioBuilder: ($, robots) =&gt; MyScenario($, robots)</code> — one file, runs on all platforms</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 10 — SOLID ═══ -->
+<div class="slide">
+  <div class="narrow">
+    <div class="slide-tag">SOLID — ADR-0081</div>
+    <h2>SOLID Alignment</h2>
+    <table>
+      <thead>
+        <tr><th>Principle</th><th>How it applies</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-purple">S — SRP</span></td>
+          <td>Robot: UI interaction. Scenario: business flow. Factory: object creation. TestBase: lifecycle + wiring.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-green">O — OCP</span></td>
+          <td>New platform → add provider + factory + robots. <strong class="t-green">No existing class modified.</strong></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-cyan">L — LSP</span></td>
+          <td><code>WebRobotFactory</code> and <code>MobileRobotFactory</code> are fully substitutable through <code>RobotFactory</code>.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-warn">I — ISP</span></td>
+          <td>Each robot interface scoped to its feature area. Split <code>RobotFactory</code> if it exceeds ~15 methods.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-purple">D — DIP</span></td>
+          <td>Scenarios depend on <code>RobotFactory</code> (abstraction). TestBase imports <code>createRobotFactory</code> from provider — no concrete factory in logic.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="card card-success" style="margin-top:20px; padding:14px 18px">
+      <p style="font-size:14px">Platform branching exists in <strong>exactly one place</strong>: the <code>export</code> declaration in <code>robot_factory_provider.dart</code> — which contains zero logic.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 11 — MIGRATION IMPACT ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Migration Impact — ADR-0082</div>
+    <h2>What Changes in Existing Mobile Tests</h2>
+    <div class="col2">
+      <div>
+        <h3 style="margin-bottom:14px">API changes</h3>
+        <table>
+          <thead><tr><th>Location</th><th>Before</th><th>After</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Test file</td>
+              <td class="t-red"><code>scenarioBuilder: ($) =&gt; ...</code></td>
+              <td class="t-green"><code>scenarioBuilder: ($, robots) =&gt; ...</code></td>
+            </tr>
+            <tr>
+              <td>Scenario</td>
+              <td class="t-red"><code>MyScenario(super.$)</code></td>
+              <td class="t-green"><code>MyScenario(super.$, super.robots)</code></td>
+            </tr>
+            <tr>
+              <td>Login</td>
+              <td class="t-red"><code>RequiresLoginMixin</code></td>
+              <td class="t-green"><code>robots.loginRobot().login()</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="card card-success" style="margin-top:14px; padding:12px 16px">
+          <ul class="check" style="font-size:13px">
+            <li>Robot interaction logic — moved, not rewritten</li>
+            <li>ScenarioUtilsMixin — unchanged</li>
+            <li>CI scripts — unchanged</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:14px">Estimated scope</h3>
+        <div class="col2" style="gap:10px">
+          <div class="card metric">
+            <div class="num t-warn">~80</div>
+            <div class="lbl">scenarios updated</div>
+          </div>
+          <div class="card metric">
+            <div class="num t-warn">~120</div>
+            <div class="lbl">test files updated</div>
+          </div>
+          <div class="card metric">
+            <div class="num" style="color:var(--accent2)">~40</div>
+            <div class="lbl">robots moved</div>
+          </div>
+          <div class="card metric">
+            <div class="num" style="color:var(--success)">~101</div>
+            <div class="lbl">new files added</div>
+          </div>
+        </div>
+        <div class="card card-danger" style="margin-top:12px; padding:12px 16px">
+          <p style="font-size:13px"><strong style="color:var(--danger)">⚠ Atomic PR required</strong><br>
+          Base API change + all scenarios + all test files must ship together. Splitting breaks mobile CI.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 12 — MIGRATION PLAN ═══ -->
+<div class="slide">
+  <div class="narrow">
+    <div class="slide-tag">Migration Plan — ADR-0083</div>
+    <h2>5 PRs · Mobile CI Always Green</h2>
+
+    <div class="pr-row">
+      <div class="pr-label" style="color:#a78bfa; background:rgba(124,106,247,.08)">PR-1</div>
+      <div class="pr-content"><strong>Abstract Robot Interfaces</strong> — create <code>robots/abstract/</code>, ~40 new files, no existing file touched</div>
+      <div class="pr-ci"><span class="badge badge-cyan" style="font-size:11px">analyze ✓</span></div>
+    </div>
+
+    <div class="pr-row">
+      <div class="pr-label" style="color:#a78bfa; background:rgba(124,106,247,.08)">PR-2</div>
+      <div class="pr-content"><strong>Move Robots to <code>robots/mobile/</code></strong> — rename ~40 files, update ~82 import paths in scenarios</div>
+      <div class="pr-ci">
+        <span class="badge badge-cyan" style="font-size:11px">analyze ✓</span>
+        <span class="badge badge-green" style="font-size:11px">mobile CI ✓</span>
+      </div>
+    </div>
+
+    <div class="pr-row">
+      <div class="pr-label" style="color:#a78bfa; background:rgba(124,106,247,.08)">PR-3</div>
+      <div class="pr-content"><strong>Web Robot Implementations</strong> — create <code>robots/web/</code>, ~15 new files, only where UI differs</div>
+      <div class="pr-ci"><span class="badge badge-cyan" style="font-size:11px">analyze ✓</span></div>
+    </div>
+
+    <div class="pr-row">
+      <div class="pr-label" style="color:#a78bfa; background:rgba(124,106,247,.08)">PR-4</div>
+      <div class="pr-content"><strong>Factories &amp; Provider Files</strong> — ~6 new files, conditional export wired</div>
+      <div class="pr-ci"><span class="badge badge-cyan" style="font-size:11px">analyze ✓</span></div>
+    </div>
+
+    <div class="pr-row" style="border: 1px solid rgba(248,113,113,.4); border-radius:8px; background:rgba(248,113,113,.04)">
+      <div class="pr-label" style="color:var(--danger); background:rgba(248,113,113,.08)">PR-5<br><small style="font-size:9px; font-weight:400">⚠ atomic</small></div>
+      <div class="pr-content"><strong>Base API + All Scenarios + All Test Files</strong> — ~202 changed files, mechanical constructor &amp; signature updates. Delete <code>RequiresLoginMixin</code>.</div>
+      <div class="pr-ci">
+        <span class="badge badge-green" style="font-size:11px">mobile CI ✓</span>
+        <span class="badge badge-cyan" style="font-size:11px">web CI ✓ 🎉</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 13 — SUMMARY ═══ -->
+<div class="slide slide-title">
+  <div class="narrow" style="text-align:center">
+    <div class="slide-tag">Summary</div>
+    <h2 style="margin-bottom:28px">What We Achieve</h2>
+    <div class="col2" style="text-align:left; margin-bottom:24px">
+      <div class="card card-success">
+        <ul class="check" style="font-size:14px">
+          <li>One test file covers all platforms</li>
+          <li>Scenarios written exactly once</li>
+          <li>No platform <code>if/else</code> in any logic class</li>
+          <li>Adding a platform touches zero existing files</li>
+          <li>Platform tags auto-applied — nothing to forget</li>
+        </ul>
+      </div>
+      <div class="card card-accent">
+        <ul style="font-size:14px">
+          <li><strong style="color:var(--accent)">ADR-0080</strong> — Setup &amp; CI execution</li>
+          <li><strong style="color:var(--accent)">ADR-0081</strong> — Architecture decision</li>
+          <li><strong style="color:var(--accent)">ADR-0082</strong> — Migration guide &amp; example</li>
+          <li><strong style="color:var(--accent)">ADR-0083</strong> — 5-PR migration plan</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flow" style="justify-content:center; gap:12px">
+      <span class="badge badge-purple">Abstract Factory</span>
+      <span class="badge badge-cyan">Conditional Export</span>
+      <span class="badge badge-green">SOLID</span>
+      <span class="badge badge-warn">5 PRs</span>
+      <span class="badge badge-red">Mobile CI always green</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let current = 0, animating = false;
+
+  function goTo(n) {
+    if (animating || n === current || n < 0 || n >= slides.length) return;
+    animating = true;
+    slides[current].classList.add('exit');
+    slides[current].classList.remove('active');
+    setTimeout(() => {
+      slides[current].classList.remove('exit');
+      current = n;
+      slides[current].classList.add('active');
+      updateUI();
+      setTimeout(() => { animating = false; }, 380);
+    }, 260);
+  }
+
+  function updateUI() {
+    document.getElementById('progress').style.width = ((current + 1) / slides.length * 100) + '%';
+    document.getElementById('counter').textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); goTo(current + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+    else if (e.key === 'Home') goTo(0);
+    else if (e.key === 'End') goTo(slides.length - 1);
+  });
+
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) dx < 0 ? goTo(current + 1) : goTo(current - 1);
+  }, {passive:true});
+
+  updateUI();
+</script>
+</body>
+</html>
