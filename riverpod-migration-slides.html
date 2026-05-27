@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GetX → Riverpod Migration — Tmail Flutter</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:        #0f1117;
+    --surface:   #1a1d27;
+    --border:    #2a2d3e;
+    --accent:    #f97316;
+    --accent2:   #4ade80;
+    --accent3:   #60a5fa;
+    --danger:    #f87171;
+    --success:   #4ade80;
+    --warning:   #fbbf24;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --code-bg:   #141820;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .deck { width: 100%; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 48px 64px;
+    opacity: 0; pointer-events: none;
+    transform: translateX(60px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .slide.active  { opacity: 1; pointer-events: auto; transform: translateX(0); }
+  .slide.exit    { opacity: 0; transform: translateX(-60px); transition: opacity .25s ease, transform .25s ease; }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .3s ease; z-index: 100;
+  }
+  #counter {
+    position: fixed; bottom: 20px; right: 28px;
+    font-size: 12px; color: var(--muted); font-family: monospace; z-index: 100;
+  }
+  #hint {
+    position: fixed; bottom: 20px; left: 28px;
+    font-size: 11px; color: var(--muted); z-index: 100;
+  }
+
+  .slide-tag {
+    font-size: 11px; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 16px;
+  }
+  h1 { font-size: clamp(32px, 4vw, 52px); font-weight: 800; line-height: 1.15; margin-bottom: 20px; }
+  h2 { font-size: clamp(22px, 2.8vw, 36px); font-weight: 700; line-height: 1.2; margin-bottom: 24px; }
+  h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; color: var(--accent2); }
+  p, li { font-size: clamp(13px, 1.5vw, 17px); line-height: 1.7; color: #cbd5e1; }
+  .lead { font-size: clamp(15px, 1.9vw, 21px); color: #94a3b8; max-width: 700px; text-align: center; }
+
+  .grad {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .grad-blue {
+    background: linear-gradient(135deg, var(--accent3), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px 24px;
+  }
+  .card-danger  { border-color: rgba(248,113,113,.4);  background: rgba(248,113,113,.05); }
+  .card-success { border-color: rgba(74,222,128,.35);  background: rgba(74,222,128,.04); }
+  .card-accent  { border-color: rgba(249,115,22,.4);   background: rgba(249,115,22,.05); }
+  .card-blue    { border-color: rgba(96,165,250,.35);  background: rgba(96,165,250,.04); }
+  .card-warn    { border-color: rgba(251,191,36,.35);  background: rgba(251,191,36,.04); }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+    font-size: clamp(10px, 1vw, 12.5px); line-height: 1.6;
+    overflow: auto; white-space: pre; color: #a5b4fc; max-height: 280px;
+  }
+  .ck { color: #c084fc; } .cs { color: #86efac; } .cc { color: #67e8f9; }
+  .ca { color: #fde68a; } .cm { color: var(--muted); } .cd { color: var(--danger); }
+  .co { color: #fb923c; }
+
+  .col2   { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+  .col3   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; width: 100%; }
+  .col-55 { display: grid; grid-template-columns: 55fr 45fr; gap: 24px; width: 100%; align-items: start; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600;
+  }
+  .badge-red    { background: rgba(248,113,113,.15); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+  .badge-green  { background: rgba(74,222,128,.12);  color: var(--success); border: 1px solid rgba(74,222,128,.3); }
+  .badge-orange { background: rgba(249,115,22,.15);  color: #fb923c; border: 1px solid rgba(249,115,22,.3); }
+  .badge-blue   { background: rgba(96,165,250,.12);  color: var(--accent3); border: 1px solid rgba(96,165,250,.3); }
+  .badge-warn   { background: rgba(251,191,36,.12);  color: var(--warning); border: 1px solid rgba(251,191,36,.3); }
+
+  .flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .arrow { color: var(--muted); font-size: 18px; }
+
+  .metric { text-align: center; }
+  .metric .num { font-size: clamp(26px, 3.2vw, 44px); font-weight: 800; line-height: 1; margin-bottom: 6px; }
+  .metric .lbl { font-size: 12px; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 9px 13px; color: var(--muted); font-weight: 600;
+       font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+       border-bottom: 1px solid var(--border); }
+  td { padding: 9px 13px; border-bottom: 1px solid rgba(42,45,62,.6); }
+  tr:last-child td { border-bottom: none; }
+  .t-red { color: var(--danger); } .t-green { color: var(--success); }
+  .t-muted { color: var(--muted); } .t-warn { color: var(--warning); }
+  .t-orange { color: #fb923c; } .t-blue { color: var(--accent3); }
+
+  ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  ul li::before { content: '▸'; color: var(--accent); margin-right: 10px; font-size: .85em; }
+  ul.check li::before { content: '✓'; color: var(--success); }
+  ul.cross li::before { content: '✗'; color: var(--danger); }
+  ul.warn  li::before { content: '⚠'; color: var(--warning); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; width: 100%; }
+
+  .slide-title { background: radial-gradient(ellipse at 60% 40%, rgba(249,115,22,.10) 0%, transparent 70%); }
+  .narrow { max-width: 880px; width: 100%; }
+  .wide   { max-width: 1180px; width: 100%; }
+  .scroll { overflow-y: auto; max-height: calc(100vh - 140px); padding-right: 4px; }
+  .scroll::-webkit-scrollbar { width: 4px; }
+  .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  .phase-row {
+    display: flex; gap: 0; width: 100%;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .phase-num {
+    padding: 12px 18px; font-size: 13px; font-weight: 800;
+    display: flex; align-items: center; min-width: 80px;
+    border-right: 1px solid var(--border); color: var(--accent);
+  }
+  .phase-content { padding: 12px 16px; flex: 1; font-size: 13px; color: #94a3b8; }
+  .phase-time { padding: 12px 14px; font-size: 12px; color: var(--muted);
+               display: flex; align-items: center; flex-shrink: 0; border-left: 1px solid var(--border); }
+
+  .map-row {
+    display: grid; grid-template-columns: 1fr 36px 1fr; gap: 0;
+    align-items: center; padding: 8px 0;
+    border-bottom: 1px solid rgba(42,45,62,.5);
+  }
+  .map-row:last-child { border-bottom: none; }
+  .map-left  { font-size: 12px; font-family: monospace; color: var(--danger); }
+  .map-arrow { text-align: center; color: var(--muted); font-size: 14px; }
+  .map-right { font-size: 12px; font-family: monospace; color: var(--success); }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="hint">← → Space · Navigate</div>
+
+<div class="deck">
+
+<!-- ═══ SLIDE 1 — TITLE ═══ -->
+<div class="slide slide-title active">
+  <div class="narrow" style="text-align:center">
+    <div class="slide-tag">State Management Migration · Tmail Flutter</div>
+    <h1>GetX <span style="color:var(--muted)">→</span><br><span class="grad">Riverpod</span></h1>
+    <p class="lead" style="margin: 0 auto 36px">
+      A phased Strangler Fig migration from GetX controllers &amp; Bindings<br>
+      to compile-safe, auto-disposing Riverpod Notifiers
+    </p>
+    <div class="flow" style="justify-content:center; gap:12px">
+      <span class="badge badge-orange">62 Controllers</span>
+      <span class="badge badge-red">78 Bindings</span>
+      <span class="badge badge-blue">5 Phases</span>
+      <span class="badge badge-green">Strangler Fig</span>
+      <span class="badge badge-warn">8–11 weeks</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 2 — ALREADY STARTED ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Current State — We Have Already Begun</div>
+    <h2>Riverpod Is Already in the Codebase</h2>
+    <div class="col2" style="margin-bottom:20px">
+      <div class="card card-blue">
+        <h3>What Exists Today</h3>
+        <ul style="font-size:13px; gap:6px">
+          <li><code style="color:#fb923c">flutter_riverpod: ^2.6.1</code> in pubspec</li>
+          <li><code style="color:#67e8f9">ProviderContainer</code> singleton at <code>lib/main/providers/</code></li>
+          <li><strong style="color:var(--success)">composerAutoSaveProvider</strong> — StateNotifierProvider.family (ADR-0086)</li>
+          <li><strong style="color:var(--success)">localSettingsNotifierProvider</strong> — StateNotifierProvider</li>
+          <li>5 Provider&lt;T&gt; in <code>composer_cache_providers.dart</code></li>
+        </ul>
+      </div>
+      <div class="card card-warn">
+        <h3>Bridge Pattern (in use now)</h3>
+        <pre style="font-size:11px; max-height:160px"><span class="cm">// GetX controller reading Riverpod:</span>
+<span class="cm">// thread_controller.dart:138</span>
+<span class="ck">final</span> threadConfig =
+  appProviderContainer
+    .read(<span class="cs">localSettingsNotifierProvider</span>)
+    .threadConfig;</pre>
+        <p style="font-size:12px; margin-top:10px; color:var(--muted)">One-directional: GetX → Riverpod only</p>
+      </div>
+    </div>
+    <div class="card" style="background:rgba(249,115,22,.04); border-color:rgba(249,115,22,.3)">
+      <p style="font-size:13px; color:#fed7aa"><strong style="color:var(--accent)">Key insight:</strong> Without a formal plan, the codebase will remain in dual-framework limbo indefinitely. The team has already voted with their code — Riverpod is the direction.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 3 — PROBLEMS WITH GETX ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Why Migrate — Problems with GetX</div>
+    <h2>Four Problems That Cannot Be Solved by GetX</h2>
+    <div class="col2">
+      <div class="card card-danger">
+        <h3 style="color:var(--danger)">1 · God Object — 3,528 lines</h3>
+        <ul class="cross" style="font-size:13px; gap:5px">
+          <li>42 Rx&lt;T&gt; fields — all always active</li>
+          <li>43 injected dependencies</li>
+          <li>31 extension files — logic scattered</li>
+        </ul>
+      </div>
+      <div class="card card-danger">
+        <h3 style="color:var(--danger)">2 · Get.find() Service Locator</h3>
+        <ul class="cross" style="font-size:13px; gap:5px">
+          <li>75+ calls across codebase</li>
+          <li>Runtime crash if not registered</li>
+          <li>Not compile-time safe</li>
+        </ul>
+      </div>
+      <div class="card card-danger">
+        <h3 style="color:var(--danger)">3 · 78 Bindings — Pure Boilerplate</h3>
+        <ul class="cross" style="font-size:13px; gap:5px">
+          <li>Hidden initialization order</li>
+          <li>No type safety for missing deps</li>
+          <li>Easy to crash on route change</li>
+        </ul>
+      </div>
+      <div class="card card-danger">
+        <h3 style="color:var(--danger)">4 · Testing Costs</h3>
+        <ul class="cross" style="font-size:13px; gap:5px">
+          <li>Test ThreadController → mock 43 deps</li>
+          <li>Must set up entire GetX environment</li>
+          <li>No test isolation per controller</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 4 — PATTERN MAPPING ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Technical — GetX to Riverpod Mapping</div>
+    <h2>Every Pattern Has a Direct Equivalent</h2>
+    <div class="col2">
+      <div class="card">
+        <h3>State &amp; Reactivity</h3>
+        <div class="map-row"><span class="map-left">Rxn&lt;T&gt;</span><span class="map-arrow">→</span><span class="map-right">StateProvider&lt;T?&gt;</span></div>
+        <div class="map-row"><span class="map-left">RxBool(false)</span><span class="map-arrow">→</span><span class="map-right">StateProvider&lt;bool&gt;</span></div>
+        <div class="map-row"><span class="map-left">RxList&lt;T&gt;</span><span class="map-arrow">→</span><span class="map-right">StateProvider&lt;List&lt;T&gt;&gt;</span></div>
+        <div class="map-row"><span class="map-left">Rx&lt;Either&gt;</span><span class="map-arrow">→</span><span class="map-right">AsyncValue&lt;T&gt;</span></div>
+        <div class="map-row"><span class="map-left">.obs</span><span class="map-arrow">→</span><span class="map-right">NotifierProvider</span></div>
+      </div>
+      <div class="card">
+        <h3>DI &amp; Effects</h3>
+        <div class="map-row"><span class="map-left">Get.put&lt;T&gt;()</span><span class="map-arrow">→</span><span class="map-right">Provider&lt;T&gt;</span></div>
+        <div class="map-row"><span class="map-left">Get.lazyPut()</span><span class="map-arrow">→</span><span class="map-right">Provider&lt;T&gt; (lazy)</span></div>
+        <div class="map-row"><span class="map-left">Get.find&lt;T&gt;()</span><span class="map-arrow">→</span><span class="map-right">ref.read(tProvider)</span></div>
+        <div class="map-row"><span class="map-left">ever(rx, cb)</span><span class="map-arrow">→</span><span class="map-right">ref.listen(p, cb)</span></div>
+        <div class="map-row"><span class="map-left">Obx(() =&gt; w)</span><span class="map-arrow">→</span><span class="map-right">Consumer(builder)</span></div>
+      </div>
+      <div class="card">
+        <h3>Controller Lifecycle</h3>
+        <div class="map-row"><span class="map-left">GetxController</span><span class="map-arrow">→</span><span class="map-right">AsyncNotifier&lt;S&gt;</span></div>
+        <div class="map-row"><span class="map-left">GetxService</span><span class="map-arrow">→</span><span class="map-right">keepAlive: true</span></div>
+        <div class="map-row"><span class="map-left">onInit()</span><span class="map-arrow">→</span><span class="map-right">build()</span></div>
+        <div class="map-row"><span class="map-left">onClose()</span><span class="map-arrow">→</span><span class="map-right">ref.onDispose()</span></div>
+        <div class="map-row"><span class="map-left">Bindings</span><span class="map-arrow">→</span><span class="map-right">Provider file</span></div>
+      </div>
+      <div class="card">
+        <h3>Navigation</h3>
+        <div class="map-row"><span class="map-left">Get.to()</span><span class="map-arrow">→</span><span class="map-right">context.go() (Phase 5)</span></div>
+        <div class="map-row"><span class="map-left">GetMaterialApp</span><span class="map-arrow">→</span><span class="map-right">MaterialApp.router</span></div>
+        <div class="map-row" style="border:none"><span class="map-left" style="color:var(--muted)">GetX routing</span><span class="map-arrow">→</span><span class="map-right" style="color:var(--muted)">go_router (optional)</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 5 — BEFORE / AFTER CODE ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Code — Controller Migration</div>
+    <h2>GetxController → AsyncNotifier</h2>
+    <div class="col2">
+      <div>
+        <p style="font-size:12px; color:var(--danger); font-weight:700; margin-bottom:8px; text-transform:uppercase; letter-spacing:.06em">Before — GetX</p>
+        <pre><span class="ck">class</span> <span class="cc">SpamReportController</span>
+    <span class="ck">extends</span> <span class="cc">GetxController</span> {
+
+  <span class="ck">final</span> spamState = <span class="cc">Rxn</span>&lt;<span class="cc">SpamReportState</span>&gt;();
+  <span class="ck">final</span> unreadCount = <span class="cc">RxInt</span>(<span class="ca">0</span>);
+
+  <span class="cs">@override</span>
+  <span class="ck">void</span> onInit() {
+    <span class="ck">super</span>.onInit();
+    _loadSpamState(); <span class="cm">// side-effecting onInit</span>
+  }
+
+  <span class="ck">Future</span>&lt;<span class="ck">void</span>&gt; _loadSpamState() <span class="ck">async</span> {
+    <span class="ck">final</span> result = <span class="ck">await</span>
+        _interactor.execute();
+    result.fold(
+      (f) =&gt; <span class="cd">log</span>(<span class="ca">'failed'</span>),
+      (s) { spamState.value = s.state; },
+    );
+  }
+}</pre>
+      </div>
+      <div>
+        <p style="font-size:12px; color:var(--success); font-weight:700; margin-bottom:8px; text-transform:uppercase; letter-spacing:.06em">After — Riverpod</p>
+        <pre><span class="ck">class</span> <span class="cc">SpamReportNotifier</span>
+    <span class="ck">extends</span> <span class="cc">AsyncNotifier</span>&lt;<span class="cc">SpamReportState</span>&gt; {
+
+  <span class="cs">@override</span>
+  <span class="ck">Future</span>&lt;<span class="cc">SpamReportState</span>&gt; build() <span class="ck">async</span> {
+    <span class="cm">// build() IS onInit() — clean &amp; testable</span>
+    <span class="ck">final</span> result = <span class="ck">await</span>
+        ref.read(<span class="co">spamInteractorProvider</span>)
+           .execute();
+    <span class="ck">return</span> result.fold(
+      (f) =&gt; <span class="ck">throw</span> f,
+      (s) =&gt; <span class="cc">SpamReportState</span>(
+        data: s.state,
+        unreadCount: s.unreadCount,
+      ),
+    );
+  }
+}
+
+<span class="ck">final</span> spamReportProvider =
+  <span class="cc">AsyncNotifierProvider</span>&lt;<span class="cc">SpamReportNotifier</span>,
+                         <span class="cc">SpamReportState</span>&gt;(
+    <span class="cc">SpamReportNotifier</span>.new);</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 6 — TARGET ARCHITECTURE ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Architecture — Target Provider Tree</div>
+    <h2>Provider Layers Replace GetX Bindings Hierarchy</h2>
+    <div class="col2">
+      <div class="card card-blue" style="align-self:start">
+        <h3>Infrastructure (keepAlive: true)</h3>
+        <ul style="font-size:12px; gap:4px">
+          <li>dioProvider</li>
+          <li>authInterceptorProvider</li>
+          <li>cachingManagerProvider</li>
+          <li>languageCacheManagerProvider</li>
+        </ul>
+        <hr style="margin:12px 0">
+        <h3>Session (keepAlive: true)</h3>
+        <ul style="font-size:12px; gap:4px">
+          <li>accountIdProvider <span style="color:var(--muted)">StateProvider</span></li>
+          <li>sessionProvider <span style="color:var(--muted)">StateProvider</span></li>
+        </ul>
+        <hr style="margin:12px 0">
+        <h3>Repositories &amp; Interactors</h3>
+        <ul style="font-size:12px; gap:4px">
+          <li>emailRepositoryProvider</li>
+          <li>sendEmailInteractorProvider</li>
+          <li>markAsReadInteractorProvider</li>
+        </ul>
+      </div>
+      <div>
+        <div class="card card-accent" style="margin-bottom:12px">
+          <h3>Feature State (auto-dispose)</h3>
+          <ul style="font-size:12px; gap:4px">
+            <li>dashboardUIProvider</li>
+            <li>threadNotifierProvider</li>
+            <li>mailboxNotifierProvider</li>
+            <li style="color:var(--success)">composerAutoSaveProvider ✓ done</li>
+          </ul>
+        </div>
+        <div class="card card-success">
+          <h3>Cross-feature Shared (keepAlive)</h3>
+          <ul style="font-size:12px; gap:4px">
+            <li>selectedMailboxProvider</li>
+            <li>selectedEmailProvider</li>
+            <li style="color:var(--success)">localSettingsNotifierProvider ✓ done</li>
+          </ul>
+        </div>
+        <div class="card" style="margin-top:12px; background:rgba(249,115,22,.04); border-color:rgba(249,115,22,.3)">
+          <p style="font-size:12px; color:#fed7aa">
+            <strong style="color:var(--accent)">Auto-logout:</strong> Set <code>sessionProvider = null</code> → all dependent providers auto-invalidate — no manual clearState() needed
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 7 — 5 PHASES OVERVIEW ═══ -->
+<div class="slide">
+  <div class="narrow">
+    <div class="slide-tag">Plan — 5 Phases (Strangler Fig)</div>
+    <h2>Replace Feature by Feature, Never All at Once</h2>
+    <div style="margin-bottom:8px">
+      <div class="phase-row">
+        <div class="phase-num">P0</div>
+        <div class="phase-content"><strong style="color:var(--text)">Setup</strong> — pubspec, ProviderScope, ProviderContainer bridge <span style="color:var(--success); font-size:11px">✓ mostly done</span></div>
+        <div class="phase-time">Done</div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-num">P1</div>
+        <div class="phase-content"><strong style="color:var(--text)">Infrastructure Providers</strong> — Dio, AuthInterceptors, CachingManager → Provider&lt;T&gt; with keepAlive</div>
+        <div class="phase-time">1 week</div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-num">P2</div>
+        <div class="phase-content"><strong style="color:var(--text)">DI Migration</strong> — 78 Binding files → provider files; platform overrides via <code>Provider.override()</code></div>
+        <div class="phase-time">1 week</div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-num">P3</div>
+        <div class="phase-content"><strong style="color:var(--text)">Leaf Controllers</strong> — SpamReport, Download, AppGrid, Search, Mailbox, Thread → AsyncNotifier</div>
+        <div class="phase-time">2–3 weeks</div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-num">P4</div>
+        <div class="phase-content"><strong style="color:var(--text)">Core Controllers</strong> — Dashboard (3,528 lines → 7 Notifiers) + Composer migration</div>
+        <div class="phase-time">3–4 weeks</div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-num">P5</div>
+        <div class="phase-content"><strong style="color:var(--text)">Routing (Optional)</strong> — go_router replaces GetX navigation; remove <code>GetMaterialApp</code></div>
+        <div class="phase-time">1–2 weeks</div>
+      </div>
+    </div>
+    <div class="flow" style="gap:12px; margin-top:16px">
+      <span class="badge badge-orange">Total: 8–11 weeks</span>
+      <span class="badge badge-blue">Phases can overlap</span>
+      <span class="badge badge-green">No big-bang rewrite</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 8 — PHASE 2: BINDINGS → PROVIDERS ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Phase 2 — Dependency Injection</div>
+    <h2>78 Bindings → Provider Files</h2>
+    <div class="col-55">
+      <div>
+        <p style="font-size:12px; color:var(--danger); font-weight:700; margin-bottom:8px; text-transform:uppercase">Before — Binding</p>
+        <pre style="font-size:11px"><span class="ck">class</span> <span class="cc">EmailActionInteractorBindings</span>
+    <span class="ck">extends</span> <span class="cc">Bindings</span> {
+  <span class="cs">@override</span>
+  <span class="ck">void</span> dependencies() {
+    Get.lazyPut(
+      () =&gt; <span class="cc">AddALabelInteractor</span>(
+        <span class="cd">Get.find</span>&lt;<span class="cc">EmailRepository</span>&gt;()
+      ),
+    );
+    Get.lazyPut(
+      () =&gt; <span class="cc">RemoveLabelInteractor</span>(
+        <span class="cd">Get.find</span>&lt;<span class="cc">EmailRepository</span>&gt;()
+      ),
+    );
+  }
+}</pre>
+        <p style="font-size:12px; color:var(--danger); margin-top:10px">
+          ✗ No compile-time check for missing deps<br>
+          ✗ Order matters — wrong order = crash<br>
+          ✗ Platform variants need subclasses
+        </p>
+      </div>
+      <div>
+        <p style="font-size:12px; color:var(--success); font-weight:700; margin-bottom:8px; text-transform:uppercase">After — Provider File</p>
+        <pre style="font-size:11px"><span class="ck">final</span> addLabelProvider =
+  <span class="cc">Provider</span>&lt;<span class="cc">AddALabelInteractor</span>&gt;(
+    (ref) =&gt; <span class="cc">AddALabelInteractor</span>(
+      ref.read(<span class="co">emailRepositoryProvider</span>)
+    ),
+  );
+
+<span class="ck">final</span> removeLabelProvider =
+  <span class="cc">Provider</span>&lt;<span class="cc">RemoveLabelInteractor</span>&gt;(
+    (ref) =&gt; <span class="cc">RemoveLabelInteractor</span>(
+      ref.read(<span class="co">emailRepositoryProvider</span>)
+    ),
+  );</pre>
+        <div style="margin-top:12px">
+          <p style="font-size:12px; color:var(--success); margin-bottom:6px">✓ Compile error if dependency missing</p>
+          <p style="font-size:12px; color:var(--success); margin-bottom:6px">✓ Lazy by default, no order issues</p>
+          <p style="font-size:12px; color:var(--success)">✓ Platform override: <code>provider.overrideWith()</code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 9 — PHASE 4: DASHBOARD DECOMPOSITION ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Phase 4 — Core: Decompose the God Object</div>
+    <h2>MailboxDashBoardController → 7 Focused Notifiers</h2>
+    <div class="col2">
+      <div class="card card-danger">
+        <h3 style="color:var(--danger)">Before — 3,528 lines</h3>
+        <ul class="cross" style="font-size:12px; gap:4px">
+          <li>42 Rx&lt;T&gt; fields (all always active)</li>
+          <li>43 injected dependencies</li>
+          <li>31 extension files</li>
+          <li>Rxn&lt;UIAction&gt; + ever() for inter-controller</li>
+          <li>Get.find() in every other controller</li>
+        </ul>
+      </div>
+      <div class="card card-success">
+        <h3>After — 7 Notifiers</h3>
+        <ul class="check" style="font-size:12px; gap:4px">
+          <li>DashboardSessionNotifier  ~150 L</li>
+          <li>DashboardUINotifier       ~200 L</li>
+          <li>EmailSelectionNotifier    ~150 L</li>
+          <li>EmailFlagNotifier         ~200 L</li>
+          <li>ComposerOrchestrationNotifier ~250 L</li>
+          <li>DragDropNotifier          ~100 L</li>
+          <li>VacationNotifier          ~100 L</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Cross-notifier Communication (replaces Rxn&lt;UIAction&gt; + ever())</h3>
+      <pre style="font-size:11px; max-height:80px"><span class="cm">// ThreadNotifier auto-reloads when mailbox changes — no ever() needed:</span>
+<span class="ck">class</span> <span class="cc">ThreadNotifier</span> <span class="ck">extends</span> <span class="cc">AsyncNotifier</span>&lt;<span class="cc">ThreadState</span>&gt; {
+  <span class="cs">@override</span>
+  <span class="ck">Future</span>&lt;<span class="cc">ThreadState</span>&gt; build() <span class="ck">async</span> {
+    <span class="ck">final</span> mailbox = ref.watch(<span class="co">selectedMailboxProvider</span>); <span class="cm">// reactive dep</span>
+    <span class="ck">if</span> (mailbox == <span class="ck">null</span>) <span class="ck">return const</span> <span class="cc">ThreadState</span>();
+    <span class="ck">return</span> _loadEmails(mailbox.id);
+  }
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 10 — TESTING ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Testing — The Key Benefit</div>
+    <h2>Testing Gets Dramatically Simpler</h2>
+    <div class="col2">
+      <div class="card card-danger">
+        <h3 style="color:var(--danger)">Before — GetX Test Setup</h3>
+        <ul class="cross" style="font-size:13px; gap:6px">
+          <li>Must set up full GetX service locator</li>
+          <li>Test ThreadController → mock 43 deps from Dashboard</li>
+          <li>Get.put() order matters in test setup</li>
+          <li>Test state bleeds between test cases</li>
+        </ul>
+      </div>
+      <div class="card card-success">
+        <h3>After — Riverpod Override</h3>
+        <pre style="font-size:11px; max-height:200px"><span class="ck">test</span>(<span class="ca">'loads emails'</span>, () <span class="ck">async</span> {
+  <span class="ck">final</span> container =
+    <span class="cc">ProviderContainer</span>(
+      overrides: [
+        <span class="cm">// inject mock — only what THIS test needs</span>
+        <span class="co">getEmailsInteractorProvider</span>
+          .overrideWithValue(
+            <span class="cc">MockGetEmailsInteractor</span>()
+          ),
+      ],
+    );
+  addTearDown(container.dispose);
+
+  <span class="ck">final</span> n = container.read(
+    <span class="co">threadNotifierProvider</span>.notifier
+  );
+  <span class="ck">await</span> n.loadEmails();
+  expect(
+    container.read(<span class="co">threadNotifierProvider</span>)
+      .value?.emails,
+    hasLength(<span class="ca">5</span>),
+  );
+});</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 11 — RISKS ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Risk Management</div>
+    <h2>Known Risks &amp; Mitigations</h2>
+    <div class="col2">
+      <div class="card card-warn">
+        <h3>⚠ Breaking changes on controller delete</h3>
+        <p style="font-size:13px; margin-top:8px">Only delete Binding after ALL consumers migrate. Use feature flags to toggle old/new.</p>
+      </div>
+      <div class="card card-warn">
+        <h3>⚠ keepAlive state stale after logout</h3>
+        <p style="font-size:13px; margin-top:8px">All session providers depend on <code>sessionProvider</code>. On logout: <code>sessionProvider = null</code> → cascade invalidation.</p>
+      </div>
+      <div class="card card-warn">
+        <h3>⚠ Performance regression</h3>
+        <p style="font-size:13px; margin-top:8px">Use <code>select()</code> to watch a slice of state. Narrow <code>Consumer</code> scope. Profile after each phase with Flutter DevTools.</p>
+      </div>
+      <div class="card card-warn">
+        <h3>⚠ State desync in transition period</h3>
+        <p style="font-size:13px; margin-top:8px">Enforce one direction: GetX → Riverpod via <code>appProviderContainer</code>. Never Riverpod → GetX. Code review checklist enforces this.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px; background:rgba(74,222,128,.04); border-color:rgba(74,222,128,.3)">
+      <p style="font-size:13px; color:#bbf7d0"><strong style="color:var(--success)">Rollback:</strong> Each phase is independent and reversible. Keep GetX controllers until Riverpod notifiers are stable for 2 sprints. No phase has a hard lock-in point.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 12 — BEFORE/AFTER METRICS ═══ -->
+<div class="slide">
+  <div class="wide">
+    <div class="slide-tag">Impact — Before vs. After</div>
+    <h2>Measurable Improvements Across Every Dimension</h2>
+    <table>
+      <thead>
+        <tr><th>Metric</th><th>GetX (Current)</th><th>Riverpod (Target)</th><th>Change</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Dependency safety</td><td class="t-red">Runtime crash</td><td class="t-green">Compile-time error</td><td class="t-green">✓ Better</td></tr>
+        <tr><td>Test isolation</td><td class="t-red">Hard (mock GetX env)</td><td class="t-green">Easy (ProviderScope)</td><td class="t-green">✓ Better</td></tr>
+        <tr><td>Auto-dispose</td><td class="t-red">Manual / Binding</td><td class="t-green">Automatic (scoped)</td><td class="t-green">✓ Better</td></tr>
+        <tr><td>State reset on logout</td><td class="t-red">Manual clearState()</td><td class="t-green">Invalidate cascade</td><td class="t-green">✓ Better</td></tr>
+        <tr><td>Platform overrides</td><td class="t-warn">Binding subclasses</td><td class="t-green">Provider.override()</td><td class="t-green">✓ Cleaner</td></tr>
+        <tr><td>DI files</td><td class="t-warn">78 Binding files</td><td class="t-green">~30 provider files</td><td class="t-green">✓ Fewer</td></tr>
+        <tr><td>Learning curve (new dev)</td><td class="t-green">Know GetX</td><td class="t-warn">Learn Riverpod</td><td class="t-warn">⚠ Harder initially</td></tr>
+        <tr><td>Reactive UI perf</td><td class="t-green">Granular (Obx)</td><td class="t-green">Granular (ref.watch)</td><td class="t-muted">= Same</td></tr>
+      </tbody>
+    </table>
+    <div class="flow" style="gap:12px; margin-top:16px">
+      <div class="metric" style="flex:1">
+        <div class="num" style="color:var(--danger)">3,528</div>
+        <div class="lbl">Dashboard lines → 7 Notifiers</div>
+      </div>
+      <div class="metric" style="flex:1">
+        <div class="num" style="color:var(--accent)">78</div>
+        <div class="lbl">Bindings → ~30 provider files</div>
+      </div>
+      <div class="metric" style="flex:1">
+        <div class="num" style="color:var(--success)">43</div>
+        <div class="lbl">Test mocks → ~5 per notifier</div>
+      </div>
+      <div class="metric" style="flex:1">
+        <div class="num" style="color:var(--accent3)">75+</div>
+        <div class="lbl">Get.find() → compile-safe ref</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 13 — SUMMARY ═══ -->
+<div class="slide slide-title">
+  <div class="narrow" style="text-align:center">
+    <div class="slide-tag">Summary</div>
+    <h2 style="margin-bottom:28px">The Migration in One Slide</h2>
+    <div class="col2" style="text-align:left; margin-bottom:24px">
+      <div class="card card-success">
+        <ul class="check" style="font-size:14px">
+          <li>Riverpod already chosen by the team (ADR-0086)</li>
+          <li>ProviderContainer bridge enables safe transition</li>
+          <li>Each phase is independent &amp; rollback-safe</li>
+          <li>Compiler catches dependency errors, not runtime</li>
+          <li>Testing drops from 43 mocks → ~5 per notifier</li>
+          <li>Dashboard 3,528 lines → 7 focused notifiers</li>
+        </ul>
+      </div>
+      <div class="card card-blue">
+        <ul style="font-size:14px">
+          <li><strong style="color:var(--accent)">Phase 1</strong> — Infrastructure providers (1 week)</li>
+          <li><strong style="color:var(--accent)">Phase 2</strong> — 78 Bindings → provider files (1 week)</li>
+          <li><strong style="color:var(--accent)">Phase 3</strong> — Leaf controllers → Notifiers (2–3 wk)</li>
+          <li><strong style="color:var(--accent)">Phase 4</strong> — Dashboard + Composer (3–4 wk)</li>
+          <li><strong style="color:var(--accent)">Phase 5</strong> — go_router (optional, 1–2 wk)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flow" style="justify-content:center; gap:12px">
+      <span class="badge badge-orange">8–11 weeks total</span>
+      <span class="badge badge-green">Strangler Fig</span>
+      <span class="badge badge-blue">No big-bang rewrite</span>
+      <span class="badge badge-warn">GetX routing stays until Phase 5</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let current = 0, animating = false;
+
+  function goTo(n) {
+    if (animating || n === current || n < 0 || n >= slides.length) return;
+    animating = true;
+    slides[current].classList.add('exit');
+    slides[current].classList.remove('active');
+    setTimeout(() => {
+      slides[current].classList.remove('exit');
+      current = n;
+      slides[current].classList.add('active');
+      updateUI();
+      setTimeout(() => { animating = false; }, 380);
+    }, 260);
+  }
+
+  function updateUI() {
+    document.getElementById('progress').style.width = ((current + 1) / slides.length * 100) + '%';
+    document.getElementById('counter').textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); goTo(current + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+    else if (e.key === 'Home') goTo(0);
+    else if (e.key === 'End') goTo(slides.length - 1);
+  });
+
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) dx < 0 ? goTo(current + 1) : goTo(current - 1);
+  }, {passive:true});
+
+  updateUI();
+</script>
+</body>
+</html>
